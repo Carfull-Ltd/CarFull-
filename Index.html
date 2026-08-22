@@ -2231,7 +2231,7 @@ async function runRealFullCheck(reg){
   if(!token)throw new Error('Your CarFull session has expired. Sign in again.');
 
   const clean=cleanReg(reg);
-  const endpoint=new URL('/api/vdgl-check',window.location.origin).href;
+  const endpoint='/api/vdgl-check';
 
   let r;
   try{
@@ -4366,7 +4366,7 @@ function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,
 .carsYouMightLikeHead span{font-size:11px;color:var(--muted)}
 .carsYouMightLikeRail{display:flex;gap:12px;overflow-x:auto;padding:0 16px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;touch-action:pan-x}.carsYouMightLikeRail::after{content:"";flex:0 0 2px}
 .carsYouMightLikeRail::-webkit-scrollbar{display:none}
-.carRecCard{flex:0 0 min(74vw,286px);width:min(74vw,286px);scroll-snap-align:start;background:#0f1411;border:1px solid #28312b;border-radius:16px;overflow:hidden;text-align:left;color:var(--text);padding:0}
+.carRecCard{flex:0 0 min(82vw,320px);width:min(82vw,320px);scroll-snap-align:start;background:#0f1411;border:1px solid #28312b;border-radius:16px;overflow:hidden;text-align:left;color:var(--text);padding:0}
 .carRecPhoto{width:100%;aspect-ratio:1.25/1;background:#18201a center/cover no-repeat;display:grid;place-items:center;color:#93a099;font-size:28px;font-weight:900}
 .carRecBody{padding:10px 10px 11px}
 .carRecName{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4380,7 +4380,15 @@ function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,
 .socialSectionLabel.feedLabel{padding-top:15px;border-top:1px solid #1e2428}
 .carsYouMightLike{padding-top:12px!important}
 .carsYouMightLikeHead b{font-size:18px!important}
-.carRecCard{flex-basis:min(74vw,286px)!important;width:min(74vw,286px)!important;scroll-snap-align:start!important}
+.carRecCard{flex-basis:min(82vw,320px)!important;width:min(82vw,320px)!important;scroll-snap-align:start!important}
 .carRecPhoto{aspect-ratio:1.35/1!important}
+</style>
+
+<style id="v667-social-paid-fix">
+/* v6.67 — Social Hub cleanup + iOS paid-report recovery fix */
+.storiesPage .liveStoryTiles,.storiesPage .storyStrip{display:none!important}
+.carsYouMightLikeRail{overflow-x:scroll!important;-webkit-overflow-scrolling:touch!important;scroll-snap-type:x mandatory!important;padding-right:44px!important}
+.carRecCard{flex:0 0 min(82vw,320px)!important;width:min(82vw,320px)!important;scroll-snap-align:start!important}
+.carRecFollow{min-width:82px!important}
 </style>
 </body></html>
