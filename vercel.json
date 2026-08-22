@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/api/vehicle",
+      "destination": "https://carfullv6122dvsalive.vercel.app/api/vehicle"
+    }
+  ]
+}

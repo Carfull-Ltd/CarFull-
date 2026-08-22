@@ -2922,7 +2922,7 @@ function activate(){go('drive')}
 function activateForDrive(reg){return createPassportByReg(reg)}
 
 async function setPassportVisibility(passportId,makePublic){
-  if(!sb||!currentUser)return requireAccount('Sign in to change Passport privacy.');
+  if(!sb||!currentUser)return requireAccount('Sign in to change History privacy.');
   const pp=passports.find(x=>String(x.id)===String(passportId));
   if(!pp)return alert('Passport not found.');
   const restore=setBusy(currentActionButton(),makePublic?'Making viewable…':'Making private…');
@@ -2940,7 +2940,7 @@ async function setPassportVisibility(passportId,makePublic){
     await trackEvent('passport_visibility_changed',{passport_id:passportId,is_public:!!makePublic});
     render();
   }catch(err){
-    alert('Could not change Passport privacy: '+(err.message||err));
+    alert('Could not change History privacy: '+(err.message||err));
   }finally{restore()}
 }
 
@@ -3007,7 +3007,7 @@ function passportDetail(){
   <div class="sectionTitle"><span>Car Stories</span><span>${storyRecords.length}</span></div>
   ${storyRecords.length?storyRecords.map(r=>`<section class="card"><b>${r.title}</b><div class="muted">${r.record_date||''} • ${r.provider==='Community'?'Community':'Private'}</div>${r.description?`<p>${r.description}</p>`:''}${evidenceForRecord(r.id).length?`<button class="btn secondary compactBtn" onclick="viewEvidence('${evidenceForRecord(r.id)[0].id}')">View photo</button>`:''}</section>`).join(''):'<section class="card empty"><b>No Stories yet</b><p class="muted">Photos and memories you add to this car will appear here.</p></section>'}
   <section class="card">
-    <b>Passport privacy</b>
+    <b>History privacy</b>
     <p class="muted">Structured vehicle history can later follow the car. Raw receipts and personal owner information will not automatically transfer.</p>
   </section>`,'passport')
 }
@@ -3901,17 +3901,17 @@ function passportUpgrade(){
     return wrap(`${title('Add Passport')}
     <section class="card">
       <div class="liveBadge">CARFULL PREMIUM ✓</div>
-      <h2>You can create up to 5 Passports</h2>
+      <h2>You can create up to 5 Car Histories</h2>
       <p class="muted">Your Premium entitlement is active. Choose another car from Garage to create its Passport.</p>
       <button class="btn" onclick="go('drive')">Choose a car</button>
-      <button class="btn secondary" style="margin-top:10px" onclick="go('passport')">Back to Passports</button>
+      <button class="btn secondary" style="margin-top:10px" onclick="go('passport')">Back to Car Histories</button>
     </section>`,'passport');
   }
   return wrap(`${title('Add Passport')}
   <section class="card premiumCard">
     <div class="upgradeIcon">🔒</div>
-    <h2>Unlock more Passports with Premium</h2>
-    <p class="muted">Your free account includes 1 Passport. Unlock up to 5 Passports with CarFull Premium.</p>
+    <h2>Unlock more Car Histories with Premium</h2>
+    <p class="muted">Your free account includes 1 Car History. Unlock up to 5 Car Histories with CarFull Premium.</p>
     <div class="premiumPrice">£9.99 <span class="muted" style="font-size:14px;font-weight:700">/ year</span></div>
     <button class="btn" onclick="go('premium')">Unlock with Premium</button>
     <button class="btn secondary" style="margin-top:10px" onclick="go('passport')">Not now</button>
@@ -4031,7 +4031,7 @@ function account(){
  <section class="card"><div class="liveBadge">SIGNED IN ✓</div><div class="muted">CarFull account</div><div class="accountEmail">${currentUser.email||'Signed-in user'}</div>${isPremium()?`<div class="codeStatus" style="margin-top:12px"><b>CarFull Premium ✓</b><div class="muted">Active until ${formatPremiumExpiry()}</div></div>`:''}</section>
  <section class="card premiumCard" onclick="go('premium')" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>CarFull Premium</b><div class="muted">${isPremium()?`Active until ${formatPremiumExpiry()}`:'£9.99/year'}</div></div><span class="lockBadge">VIEW</span></div></section>
  <div class="valueLine" onclick="go('redeemPremium')" style="cursor:pointer"><span>Redeem Premium Code</span><b>›</b></div>
- <section class="card"><b>Your CarFull</b><div class="valueLine"><span>Garage vehicles</span><b>${myDrive.length}/${garageLimit()}</b></div><div class="valueLine"><span>Passports</span><b>${passports.length}/${passportLimit()}</b></div><div class="valueLine" onclick="go('myChecks')" style="cursor:pointer"><span>My Checks</span><b>›</b></div></section>
+ <section class="card"><b>Your CarFull</b><div class="valueLine"><span>Garage vehicles</span><b>${myDrive.length}/${garageLimit()}</b></div><div class="valueLine"><span>Car Histories</span><b>${passports.length}/${passportLimit()}</b></div><div class="valueLine" onclick="go('myChecks')" style="cursor:pointer"><span>My Checks</span><b>›</b></div></section>
  <section class="card"><b>Settings</b><div class="valueLine"><span>Notifications</span><b>›</b></div><div class="valueLine" onclick="go('privacyControls')" style="cursor:pointer"><span>Privacy & data</span><b>›</b></div><div class="valueLine"><span>Help</span><b>›</b></div><button type="button" class="btn secondary" style="margin-top:12px" onclick="signOutCarFull()">Sign out</button></section>
  <section class="card dangerCard" onclick="go('deleteAccount')" style="cursor:pointer"><b class="dangerText">Delete account</b><p class="smallNote">Permanently delete your CarFull account and account-linked data.</p></section>
  <section class="card"><b>Need help?</b><p class="muted">Email us at hello@carfull.co.uk</p><button type="button" class="btn secondary" style="margin-top:10px" onclick="contactCarFull()">Contact CarFull</button></section>`,'account')
@@ -4252,17 +4252,23 @@ function liveCommunityStories(){
 
 function carsYouMightLike(){
   const rows=communityStoryRows();
-  if(!rows.length)return '';
+  if(!rows.length)return `<section class="carsYouMightLike"><div class="carsYouMightLikeHead"><b>Cars you might like</b><span>Swipe to discover</span></div><div class="carRecEmpty">More community cars will appear here as they are shared.</div></section>`;
   const seen=new Set();
   const picks=[];
+  const ownFallback=[];
   for(const row of rows){
     const pp=row.pp, ev=row.ev, r=row.r;
     if(!pp||!pp.id||seen.has(pp.id))continue;
-    if(currentUser&&r&&r.user_id===currentUser.id)continue;
     seen.add(pp.id);
-    picks.push({pp,ev,r});
+    const item={pp,ev,r};
+    if(currentUser&&r&&r.user_id===currentUser.id)ownFallback.push(item);
+    else picks.push(item);
     if(picks.length>=10)break;
   }
+  // Early beta can have very few community cars. Keep the rail visible rather than
+  // making the feature appear broken; own cars are only used when there are no
+  // other recommendations yet.
+  if(!picks.length)picks.push(...ownFallback.slice(0,10));
   if(!picks.length)return '';
   return `<section class="carsYouMightLike">
     <div class="carsYouMightLikeHead"><b>Cars you might like</b><span>Swipe to discover</span></div>
@@ -4301,7 +4307,7 @@ function stories(){
     if(currentUser&&!storyInteractionsLoaded&&!window.__storyInteractionLoadPending){window.__storyInteractionLoadPending=true;loadStoryInteractions().finally(()=>{window.__storyInteractionLoadPending=false;if(screen==='stories')render()})}
   }
   const feed=(!globalCommunityStoriesLoaded&&!rows.length)?`<section class="card storiesEmpty"><b>Loading Social Hub…</b><p class="muted">Fetching the latest cars.</p></section>`:globalCommunityStoriesError?`<section class="card storiesEmpty"><b>Could not load Stories</b><p class="muted">${globalCommunityStoriesError}</p><button class="btn secondary" onclick="globalCommunityStoriesLoaded=false;globalCommunityStoriesError='';render()">Try again</button></section>`:liveCommunityStories();
-  return wrap(`<div class="storiesPage"><div class="storiesTopbar"><h1>Stories</h1><button class="storiesNewBtn" onclick="startStoryFromFeed()" aria-label="New story">＋</button></div>${liveStoryTiles()}${carsYouMightLike()}${feed}</div>`,'stories');
+  return wrap(`<div class="storiesPage"><div class="storiesTopbar"><h1>Social Hub</h1><button class="storiesNewBtn" onclick="startStoryFromFeed()" aria-label="New story">＋</button></div>${carsYouMightLike()}<div class="socialSectionLabel">Car stories</div>${liveStoryTiles()}<div class="socialSectionLabel feedLabel">Latest from the community</div>${feed}</div>`,'stories');
 }
 
 function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,result,recentSearchHistory,passport,passportUpgrade,passportDetail,evidenceUpload,addMaintenance,scanInvoice,scanServiceStamp,addCarStory,storyPrivacy,viewPassport,stories,storyPicker,storyCar,publicPassport,communityUsername,alerts,fullCheckOffer,fullCheckCheckout,fullCheckReport,myChecks,redeemPremium,premium,passwordReset,privacyControls,deleteAccount,account,more}[screen]||home)()+scoreSheet()}render();initBackend();
@@ -4339,5 +4345,12 @@ function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,
 .carRecOpen{border:0;background:#1a211d;color:#e7ece8;border-radius:9px;padding:8px 8px;font-size:11px;font-weight:850}
 .carRecFollow{border:0;background:var(--green);color:#071008;border-radius:9px;padding:8px 9px;font-size:11px;font-weight:900;white-space:nowrap}
 .carRecFollow.following{background:#171d19;color:#e8eeea;border:1px solid #46504b}
+.carRecEmpty{margin:0 16px;padding:15px;border:1px dashed #334038;border-radius:14px;color:var(--muted);font-size:13px;background:#0f1411}
+.socialSectionLabel{padding:13px 16px 5px;color:#aeb8b2;font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;background:#090b0d}
+.socialSectionLabel.feedLabel{padding-top:15px;border-top:1px solid #1e2428}
+.carsYouMightLike{padding-top:12px!important}
+.carsYouMightLikeHead b{font-size:18px!important}
+.carRecCard{flex-basis:172px!important;width:172px!important}
+.carRecPhoto{aspect-ratio:1.35/1!important}
 </style>
 </body></html>
