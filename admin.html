@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarFull Admin</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #080d12;
+      color: white;
+    }
+
+    header {
+      padding: 28px 20px 18px;
+      border-bottom: 1px solid #1d2832;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .logo span { color: #2dd4a7; }
+
+    .subtitle {
+      color: #8b9aaa;
+      margin-top: 5px;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .status {
+      color: #8b9aaa;
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      background: #111820;
+      border: 1px solid #202c37;
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 115px;
+    }
+
+    .number {
+      font-size: 34px;
+      font-weight: 800;
+      color: #2dd4a7;
+    }
+
+    .label {
+      margin-top: 7px;
+      color: #a7b3bf;
+      font-size: 14px;
+    }
+
+    .refresh {
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px;
+      border: 0;
+      border-radius: 12px;
+      background: #2dd4a7;
+      color: #06100d;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    @media (min-width: 700px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Car<span>Full</span></div>
+  <div class="subtitle">Admin Dashboard</div>
+</header>
+
+<main>
+  <div id="status" class="status">Loading live CarFull data...</div>
+
+  <div class="grid">
+    <div class="card"><div class="number" id="total_users">—</div><div class="label">Total Users</div></div>
+    <div class="card"><div class="number" id="cars_in_garage">—</div><div class="label">Cars in Garage</div></div>
+    <div class="card"><div class="number" id="passports_created">—</div><div class="label">Passports</div></div>
+    <div class="card"><div class="number" id="active_premium">—</div><div class="label">Active Premium</div></div>
+    <div class="card"><div class="number" id="vehicle_searches">—</div><div class="label">Vehicle Searches</div></div>
+    <div class="card"><div class="number" id="app_opens">—</div><div class="label">App Opens</div></div>
+    <div class="card"><div class="number" id="activity_last_24h">—</div><div class="label">Activity – Last 24h</div></div>
+    <div class="card"><div class="number" id="garage_adds">—</div><div class="label">Garage Adds</div></div>
+    <div class="card"><div class="number" id="passport_events">—</div><div class="label">Passport Creations</div></div>
+  </div>
+
+  <button class="refresh" onclick="loadDashboard()">Refresh dashboard</button>
+</main>
+
+<script>
+async function loadDashboard() {
+  const status = document.getElementById("status");
+  status.textContent = "Loading live CarFull data...";
+
+  try {
+    const response = await fetch("/api/admin-dashboard");
+
+    if (!response.ok) {
+      throw new Error("Dashboard API unavailable");
+    }
+
+    const data = await response.json();
+
+    const fields = [
+      "total_users",
+      "cars_in_garage",
+      "passports_created",
+      "active_premium",
+      "vehicle_searches",
+      "app_opens",
+      "activity_last_24h",
+      "garage_adds",
+      "passport_events"
+    ];
+
+    fields.forEach(field => {
+      document.getElementById(field).textContent =
+        data[field] ?? "0";
+    });
+
+    status.textContent = "Live data • updated " +
+      new Date().toLocaleTimeString();
+  } catch (error) {
+    status.textContent = "Unable to load dashboard data";
+  }
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>
