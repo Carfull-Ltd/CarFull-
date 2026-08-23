@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarFull Admin</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #080d12;
+      color: white;
+    }
+
+    header {
+      padding: 28px 20px 18px;
+      border-bottom: 1px solid #1d2832;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .logo span {
+      color: #20d98b;
+    }
+
+    .subtitle {
+      color: #8c9aa8;
+      margin-top: 6px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 22px 18px;
+    }
+
+    .login {
+      background: #111820;
+      border: 1px solid #26323d;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 22px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #34414d;
+      background: #080d12;
+      color: white;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #20d98b;
+      color: #04110b;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      background: #111820;
+      border: 1px solid #26323d;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .label {
+      color: #8c9aa8;
+      font-size: 14px;
+    }
+
+    .number {
+      font-size: 32px;
+      font-weight: 800;
+      margin-top: 7px;
+    }
+
+    #status {
+      margin-top: 12px;
+      color: #ffbf5b;
+    }
+
+    #dashboard {
+      display: none;
+    }
+
+    @media (min-width: 700px) {
+      .grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Car<span>Full</span></div>
+  <div class="subtitle">Live Admin Dashboard</div>
+</header>
+
+<main>
+
+  <div class="login" id="loginBox">
+    <strong>Admin access</strong>
+    <input
+      id="adminKey"
+      type="password"
+      placeholder="Enter dashboard key"
+      autocomplete="current-password"
+    >
+    <button onclick="loadDashboard()">Open dashboard</button>
+    <div id="status"></div>
+  </div>
+
+  <div id="dashboard">
+    <div class="grid">
+
+      <div class="card">
+        <div class="label">Total users</div>
+        <div class="number" id="total_users">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Cars in garage</div>
+        <div class="number" id="cars_in_garage">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Passports</div>
+        <div class="number" id="passports_created">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Paid checks</div>
+        <div class="number" id="paid_checks">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Active Premium</div>
+        <div class="number" id="active_premium">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Vehicle searches</div>
+        <div class="number" id="vehicle_searches">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">App opens</div>
+        <div class="number" id="app_opens">–</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Activity — last 24h</div>
+        <div class="number" id="activity_last_24h">–</div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script>
+  async function loadDashboard() {
+    const key = document.getElementById('adminKey').value.trim();
+    const status = document.getElementById('status');
+
+    if (!key) {
+      status.textContent = 'Enter your dashboard key.';
+      return;
+    }
+
+    status.textContent = 'Loading...';
+
+    try {
+      const response = await fetch('/api/admin-dashboard', {
+        method: 'GET',
+        headers: {
+          'x-admin-key': key
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to load dashboard');
+      }
+
+      const fields = [
+        'total_users',
+        'cars_in_garage',
+        'passports_created',
+        'paid_checks',
+        'active_premium',
+        'vehicle_searches',
+        'app_opens',
+        'activity_last_24h'
+      ];
+
+      fields.forEach(field => {
+        document.getElementById(field).textContent =
+          data[field] ?? 0;
+      });
+
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+
+    } catch (error) {
+      status.textContent = error.message;
+    }
+  }
+
+  document.getElementById('adminKey').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') loadDashboard();
+  });
+</script>
+
+</body>
+</html>
