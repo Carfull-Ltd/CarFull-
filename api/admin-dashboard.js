@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://pgczryadczopajxcmmtj.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
