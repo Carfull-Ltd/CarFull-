@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CarFull Admin</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ background:#080d12;
+ color:#fff
+}
+header{
+ padding:28px 20px 18px;
+ border-bottom:1px solid #1d2832
+}
+.logo{font-size:32px;font-weight:800}
+.logo span{color:#63d794}
+.sub{color:#98a3b3;margin-top:5px;font-size:18px}
+main{padding:22px;max-width:900px;margin:auto}
+.login,.card{
+ background:#111821;
+ border:1px solid #2a3642;
+ border-radius:18px
+}
+.login{padding:20px}
+input{
+ width:100%;
+ padding:17px;
+ background:#080d12;
+ border:1px solid #42505d;
+ border-radius:13px;
+ color:white;
+ font-size:18px
+}
+button{
+ width:100%;
+ margin-top:14px;
+ padding:17px;
+ border:0;
+ border-radius:13px;
+ background:#63d794;
+ font-size:19px;
+ font-weight:800
+}
+#status{margin-top:14px;color:#f3c45e}
+#dash{
+ display:none;
+ grid-template-columns:1fr 1fr;
+ gap:12px;
+ margin-top:18px
+}
+.card{padding:18px}
+.label{color:#98a3b3;font-size:14px}
+.number{font-size:30px;font-weight:800;margin-top:6px}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">Car<span>Full</span></div>
+ <div class="sub">Live Admin Dashboard</div>
+</header>
+
+<main>
+
+<div class="login">
+ <input id="key" type="password" placeholder="Admin password">
+ <button onclick="load()">Open dashboard</button>
+ <div id="status"></div>
+</div>
+
+<div id="dash"></div>
+
+</main>
+
+<script>
+async function load(){
+
+ const key=document.getElementById('key').value.trim();
+ const status=document.getElementById('status');
+ const dash=document.getElementById('dash');
+
+ if(!key){
+   status.textContent='Enter your dashboard key.';
+   return;
+ }
+
+ status.textContent='Loading...';
+
+ try{
+
+   const r=await fetch('/api/admin-dashboard3',{
+     headers:{'x-admin-key':key}
+   });
+
+   const d=await r.json();
+
+   if(!r.ok) throw new Error(d.error || 'Dashboard failed');
+
+   const items=[
+    ['Total users',d.total_users],
+    ['Cars in garage',d.cars_in_garage],
+    ['Passports created',d.passports_created],
+    ['Paid checks',d.paid_checks],
+    ['Active premium',d.active_premium],
+    ['Vehicle searches',d.vehicle_searches],
+    ['App opens',d.app_opens],
+    ['Activity – last 24h',d.activity_last_24h],
+    ['Garage adds',d.garage_adds],
+    ['Passport events',d.passport_events]
+   ];
+
+   dash.innerHTML=items.map(x=>
+    `<div class="card">
+       <div class="label">${x[0]}</div>
+       <div class="number">${x[1] ?? 0}</div>
+     </div>`
+   ).join('');
+
+   dash.style.display='grid';
+   status.textContent='';
+
+ }catch(e){
+   dash.style.display='none';
+   status.textContent=e.message;
+ }
+}
+</script>
+
+</body>
+</html>
