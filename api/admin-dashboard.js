@@ -69,3 +69,4 @@ export default async function handler(req, res) {
     });
   }
 }
+// Redeploy after environment variable update
