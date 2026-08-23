@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarFull Dashboard</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #080d12;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    header {
+      padding: 38px 24px 24px;
+      border-bottom: 1px solid #24303b;
+    }
+
+    .logo {
+      font-size: 40px;
+      font-weight: 800;
+    }
+
+    .logo span { color: #7fd39a; }
+
+    .sub {
+      color: #9aa5b1;
+      margin-top: 8px;
+      font-size: 18px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 28px 20px;
+    }
+
+    .login {
+      background: #111821;
+      border: 1px solid #34414e;
+      border-radius: 20px;
+      padding: 22px;
+    }
+
+    input {
+      width: 100%;
+      background: #080d12;
+      border: 1px solid #455463;
+      color: white;
+      padding: 18px;
+      border-radius: 14px;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      background: #7fd39a;
+      color: #07110a;
+      padding: 18px;
+      border-radius: 14px;
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    #status {
+      margin-top: 14px;
+      color: #f0c45c;
+    }
+
+    #dashboard {
+      display: none;
+      margin-top: 25px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: #111821;
+      border: 1px solid #34414e;
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .number {
+      font-size: 34px;
+      font-weight: 800;
+      color: #7fd39a;
+    }
+
+    .label {
+      color: #aab4be;
+      margin-top: 5px;
+    }
+
+    @media (min-width: 700px) {
+      .grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Car<span>Full</span></div>
+  <div class="sub">Live Admin Dashboard</div>
+</header>
+
+<main>
+
+  <div class="login">
+    <input
+      id="key"
+      type="password"
+      placeholder="Dashboard password"
+      autocomplete="off"
+    >
+
+    <button onclick="loadDashboard()">Open dashboard</button>
+
+    <div id="status"></div>
+  </div>
+
+  <div id="dashboard">
+    <div class="grid" id="cards"></div>
+  </div>
+
+</main>
+
+<script>
+async function loadDashboard() {
+
+  const key = document.getElementById('key').value.trim();
+  const status = document.getElementById('status');
+  const dashboard = document.getElementById('dashboard');
+  const cards = document.getElementById('cards');
+
+  if (!key) {
+    status.textContent = 'Enter your dashboard password.';
+    return;
+  }
+
+  status.textContent = 'Loading...';
+
+  try {
+
+    const response = await fetch('/api/dashboard', {
+      method: 'GET',
+      headers: {
+        'x-admin-key': key
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Dashboard request failed');
+    }
+
+    const items = [
+      ['Total users', data.total_users],
+      ['Cars in garage', data.cars_in_garage],
+      ['Passports created', data.passports_created],
+      ['Paid checks', data.paid_checks],
+      ['Active Premium', data.active_premium],
+      ['Vehicle searches', data.vehicle_searches],
+      ['App opens', data.app_opens],
+      ['Activity last 24h', data.activity_last_24h]
+    ];
+
+    cards.innerHTML = items.map(item => `
+      <div class="card">
+        <div class="number">${Number(item[1] || 0)}</div>
+        <div class="label">${item[0]}</div>
+      </div>
+    `).join('');
+
+    dashboard.style.display = 'block';
+    status.textContent = 'Dashboard connected ✓';
+
+  } catch (error) {
+
+    dashboard.style.display = 'none';
+    status.textContent = error.message;
+
+  }
+}
+</script>
+
+</body>
+</html>
