@@ -1,15 +1,21 @@
-const baseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const adminKey = process.env.CARFULL_ADMIN_PASSWORD || '';
+const rawUrl = String(process.env.SUPABASE_URL || '').trim();
+const baseUrl = rawUrl
+  .replace(/\/+$/, '')
+  .replace(/\/rest\/v1$/i, '');
 
-async function countRows(table, query = '') {
-  const url = `${baseUrl}/rest/v1/${table}?select=*&limit=1${query}`;
+const serviceKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+const adminKey = String(process.env.CARFULL_ADMIN_PASSWORD || '').trim();
+
+async function countRows(table) {
+  const url = `${baseUrl}/rest/v1/${table}?select=*&limit=1`;
 
   const response = await fetch(url, {
+    method: 'GET',
     headers: {
       apikey: serviceKey,
       Authorization: `Bearer ${serviceKey}`,
-      Prefer: 'count=exact'
+      Prefer: 'count=exact',
+      Accept: 'application/json'
     }
   });
 
@@ -38,7 +44,7 @@ export default async function handler(req, res) {
     });
   }
 
-  if (suppliedKey !== String(adminKey).trim()) {
+  if (suppliedKey !== adminKey) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -75,7 +81,6 @@ export default async function handler(req, res) {
       app_opens: 0,
       activity_last_24h: 0
     });
-
   } catch (error) {
     console.error('Dashboard API error:', error);
 
