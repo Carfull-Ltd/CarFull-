@@ -1,6 +1,6 @@
 const rawSupabaseUrl = process.env.SUPABASE_URL || '';
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const adminKey = process.env.ADMIN_DASHBOARD_KEY || '';
+const adminKey = process.env.CARFULL_ADMIN_PASSWORD || '';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
