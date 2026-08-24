@@ -1368,7 +1368,13 @@ let premiumExpiresAt=null;
 let premiumSource=null;
 
 let recentSearches=[];
+// Unique visitor tracking
+let carfullVisitorId = localStorage.getItem('carfull_visitor_id');
 
+if (!carfullVisitorId) {
+  carfullVisitorId = crypto.randomUUID();
+  localStorage.setItem('carfull_visitor_id', carfullVisitorId);
+}
 const car=null;
 let screen='home',myDrive=[],passports=[],checkedCar=null,checkTab='summary',driveCar=null,openMenuReg=null,scoreOpen=false,scoreVehicle=null,expandedMotKey=null;
 let sb=null,currentUser=null,backendReady=false,backendMessage='Connecting…',passwordRecoveryMode=(location.hash.includes('type=recovery')||location.search.includes('type=recovery')||location.search.includes('reset=1'));
