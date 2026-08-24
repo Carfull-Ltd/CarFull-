@@ -1386,6 +1386,7 @@ async function trackEvent(eventName, metadata={}){
     if(!sb || !currentUser)return;
     await sb.from('analytics_events').insert({
       user_id:currentUser.id,
+      visitor_id: carfullVisitorId,
       event_name:eventName,
       registration:metadata.registration||null,
       source:'carfull-webapp',
