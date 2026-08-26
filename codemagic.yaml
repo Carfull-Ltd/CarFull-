@@ -3,19 +3,38 @@ workflows:
     name: CarFull iOS
     max_build_duration: 60
     instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: CarFull Ltd 2
+
     environment:
       xcode: latest
       node: 22
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.carfull.app
+
     scripts:
       - name: Install dependencies
         script: npm install
+
       - name: Generate Capacitor iOS project
         script: npm run prepare:ios
-      - name: Verify iOS project
+
+      - name: Apply iOS signing
         script: |
-          test -d ios/App/App.xcworkspace
-          echo "CarFull iOS project generated successfully"
+          xcode-project use-profiles
+
+      - name: Build signed IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$CM_BUILD_DIR/ios/App/App.xcworkspace" \
+            --scheme "App"
+
     artifacts:
-      - ios/App/App.xcworkspace/**
-      - ios/App/App.xcodeproj/**
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
