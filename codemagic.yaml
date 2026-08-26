@@ -8,7 +8,7 @@ workflows:
       node: 22
     scripts:
       - name: Install dependencies
-        script: npm ci
+        script: npm install
       - name: Generate Capacitor iOS project
         script: npm run prepare:ios
       - name: Verify iOS project
