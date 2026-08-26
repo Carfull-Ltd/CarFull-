@@ -1,0 +1,12 @@
+workflows:
+  carfull-ios:
+    name: CarFull iOS
+    max_build_duration: 60
+    environment:
+      xcode: latest
+    scripts:
+      - name: Create CarFull iOS project
+        script: |
+          echo "Preparing CarFull iOS build"
+    artifacts:
+      - build/ios/ipa/*.ipa
