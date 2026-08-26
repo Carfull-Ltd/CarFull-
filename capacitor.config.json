@@ -1,0 +1,6 @@
+{
+  "appId": "uk.co.carfull.app",
+  "appName": "CarFull",
+  "webDir": "www",
+  "server": { "iosScheme": "https" }
+}
