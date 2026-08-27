@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Purchases } from '@revenuecat/purchases-capacitor';
 
 const CONFIG = {
@@ -79,4 +79,17 @@ async function restore(){
   return statusFrom(info);
 }
 
-window.CarFullNativePurchases = { isNativeIOS, identify, getStatus, purchaseMembership, purchaseCheck, restore, CONFIG };
+// Native HTTP avoids WKWebView cross-origin/CORS failures while still calling
+// the exact same production CarFull API used by the web app.
+async function apiRequest({url, method='GET', headers={}, body=null}={}){
+  if(!isNativeIOS()) throw new Error('Native HTTP is only available in the CarFull iPhone app.');
+  const options={url,method:String(method||'GET').toUpperCase(),headers:{...headers}};
+  if(body!==null && body!==undefined){
+    if(typeof body==='string'){
+      try{options.data=JSON.parse(body)}catch(e){options.data=body}
+    }else options.data=body;
+  }
+  return CapacitorHttp.request(options);
+}
+
+window.CarFullNativePurchases = { isNativeIOS, identify, getStatus, purchaseMembership, purchaseCheck, restore, apiRequest, CONFIG };

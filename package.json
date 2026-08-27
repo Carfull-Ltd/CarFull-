@@ -1,11 +1,11 @@
 {
   "name": "carfull-ios",
   "private": true,
-  "version": "6.77.0",
+  "version": "6.78.0",
   "scripts": {
     "prepare:web": "rm -rf www && mkdir -p www && cp index.html native-config.js manifest.webmanifest apple-touch-icon.png favicon.png icon-192.png icon-512.png www/",
     "build:native-bridge": "esbuild native-purchases.js --bundle --format=iife --global-name=CarFullNativeBundle --outfile=www/native-purchases.bundle.js",
-    "prepare:ios": "npm run prepare:web && npm run build:native-bridge && npx cap add ios && npx cap sync ios"
+    "prepare:ios": "npm run prepare:web && npm run build:native-bridge && npx cap add ios && npx cap sync ios && node patch-ios.mjs"
   },
   "dependencies": {
     "@capacitor/core": "7.4.3",
