@@ -1383,6 +1383,18 @@ body,#app,.app{background:#050706!important}
 .cfReasonGrid{display:grid;gap:7px;padding:2px 4px 6px}.cfReasonBtn{width:100%;min-height:48px;border:1px solid #2b3730;border-radius:13px;background:#0c110e;color:#f4f7f5;font-weight:800;text-align:left;padding:0 13px}.cfReasonBtn:active{background:#182019}
 .cfModToast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:100000;background:#18251b;color:#eaf7ed;border:1px solid #39513f;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:800;box-shadow:0 8px 30px rgba(0,0,0,.35);max-width:88%;text-align:center}
 </style>
+
+<style id="ios-native-zoom-fix">
+html{-webkit-text-size-adjust:100%}
+@supports (-webkit-touch-callout:none){
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select{
+    font-size:16px!important;
+  }
+}
+</style>
+
 </head><body data-carfull-build="v6.68.3"><div id="app"></div>
 <script>
 let premiumActive=false;
@@ -4321,7 +4333,7 @@ function premium(){return wrap(`${title('CarFull Pro')}
 ?`<div class="codeStatus" style="margin-top:16px"><b>CarFull Pro active ✓</b><div class="muted">Until ${formatPremiumExpiry()}</div></div>`
 :`<button class="btn" style="margin-top:16px" onclick="buyPremium()">Unlock CarFull Pro — £9.99/year</button><button class="btn secondary" style="margin-top:10px" onclick="go('redeemPremium')">Redeem CarFull Pro Code</button>`}
 ${isNativeIOSBuild()?'<button class="btn secondary" style="margin-top:10px" onclick="restoreCarFullPro()">Restore Purchases</button>':''}
-<div class="legalLinks"><a href="/terms/" target="_blank">Terms of Use</a><span>•</span><a href="/privacy/" target="_blank">Privacy Policy</a></div>
+<div class="legalLinks"><a href="https://www.carfull.co.uk/terms/" target="_blank" rel="noopener">Terms of Use</a><span>•</span><a href="https://www.carfull.co.uk/privacy/" target="_blank" rel="noopener">Privacy Policy</a></div>
 </section>
 <section class="card freeCompareV638"><b>CarFull Free is still useful</b><p class="muted">Free registration checks • buy a Full Check when you need one • 1 car in Garage & Social Hub + history • browse and post Stories • likes • unlimited car follows.</p></section>`,'account')}
 
@@ -4340,7 +4352,7 @@ function privacyControls(){return wrap(`${title('Privacy & Data')}
 </section>
 <section class="card">
   <b>Your controls</b>
-  <div class="valueLine" onclick="window.open('/privacy/','_blank')" style="cursor:pointer"><span>Privacy Policy</span><b>›</b></div><div class="valueLine" onclick="window.open('/terms/','_blank')" style="cursor:pointer"><span>Terms of Use</span><b>›</b></div>
+  <div class="valueLine" onclick="window.open('https://www.carfull.co.uk/privacy/','_blank','noopener')" style="cursor:pointer"><span>Privacy Policy</span><b>›</b></div><div class="valueLine" onclick="window.open('https://www.carfull.co.uk/terms/','_blank','noopener')" style="cursor:pointer"><span>Terms of Use</span><b>›</b></div>
   <div class="valueLine"><span>Download my data</span><b>Planned</b></div>
   <div class="valueLine" onclick="go('deleteAccount')" style="cursor:pointer"><span class="dangerText">Delete my account</span><b>›</b></div>
 </section>`,'account')}
@@ -4397,7 +4409,7 @@ function account(){
  <div><span class="textLink" onclick="forgotPassword()">Forgot password?</span></div>
  </section>
  <section class="card"><b>Free account includes</b><p class="muted">1-car Garage • car history • last 10 searches • Stories • free registration checks.</p></section>
- <section class="card"><b>Legal</b><div class="valueLine" onclick="window.open('/privacy/','_blank')" style="cursor:pointer"><span>Privacy Policy</span><b>›</b></div><div class="valueLine" onclick="window.open('/terms/','_blank')" style="cursor:pointer"><span>Terms of Use</span><b>›</b></div></section>
+ <section class="card"><b>Legal</b><div class="valueLine" onclick="window.open('https://www.carfull.co.uk/privacy/','_blank','noopener')" style="cursor:pointer"><span>Privacy Policy</span><b>›</b></div><div class="valueLine" onclick="window.open('https://www.carfull.co.uk/terms/','_blank','noopener')" style="cursor:pointer"><span>Terms of Use</span><b>›</b></div></section>
  <section class="card"><b>Need help?</b><p class="muted">Contact the CarFull team.</p><button type="button" class="btn secondary" style="margin-top:10px" onclick="contactCarFull()">Contact CarFull</button></section>`,'account');
 
  return wrap(`${title('Account')}
@@ -4405,7 +4417,7 @@ function account(){
  <section class="card premiumCard" onclick="go('premium')" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>CarFull Pro</b><div class="muted">${isPremium()?`Active until ${formatPremiumExpiry()}`:'£9.99/year'}</div></div><span class="lockBadge">VIEW</span></div></section>
  <div class="valueLine" onclick="go('redeemPremium')" style="cursor:pointer"><span>Redeem CarFull Pro Code</span><b>›</b></div>
  <section class="card"><b>Your CarFull</b><div class="valueLine"><span>Garage vehicles</span><b>${myDrive.length}/${garageLimit()}</b></div><div class="valueLine"><span>Car Histories</span><b>${passports.length}/${passportLimit()}</b></div><div class="valueLine" onclick="go('myChecks')" style="cursor:pointer"><span>My Checks</span><b>›</b></div></section>
- <section class="card"><b>Settings</b><div class="valueLine"><span>Notifications</span><b>›</b></div><div class="valueLine" onclick="go('privacyControls')" style="cursor:pointer"><span>Privacy & data</span><b>›</b></div><div class="valueLine" onclick="window.open('/privacy/','_blank')" style="cursor:pointer"><span>Privacy Policy</span><b>›</b></div><div class="valueLine" onclick="window.open('/terms/','_blank')" style="cursor:pointer"><span>Terms of Use</span><b>›</b></div><div class="valueLine"><span>Help</span><b>›</b></div><button type="button" class="btn secondary" style="margin-top:12px" onclick="signOutCarFull()">Sign out</button></section>
+ <section class="card"><b>Settings</b><div class="valueLine"><span>Notifications</span><b>›</b></div><div class="valueLine" onclick="go('privacyControls')" style="cursor:pointer"><span>Privacy & data</span><b>›</b></div><div class="valueLine" onclick="window.open('https://www.carfull.co.uk/privacy/','_blank','noopener')" style="cursor:pointer"><span>Privacy Policy</span><b>›</b></div><div class="valueLine" onclick="window.open('https://www.carfull.co.uk/terms/','_blank','noopener')" style="cursor:pointer"><span>Terms of Use</span><b>›</b></div><div class="valueLine"><span>Help</span><b>›</b></div><button type="button" class="btn secondary" style="margin-top:12px" onclick="signOutCarFull()">Sign out</button></section>
  <section class="card dangerCard" onclick="go('deleteAccount')" style="cursor:pointer"><b class="dangerText">Delete account</b><p class="smallNote">Permanently delete your CarFull account and account-linked data.</p></section>
  <section class="card"><b>Need help?</b><p class="muted">Email us at hello@carfull.co.uk</p><button type="button" class="btn secondary" style="margin-top:10px" onclick="contactCarFull()">Contact CarFull</button></section>`,'account')
 }
