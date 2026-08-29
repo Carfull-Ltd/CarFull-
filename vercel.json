@@ -1,5 +1,12 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://www.carfull.co.uk/api/:path*" }
+    {
+      "source": "/api/vehicle",
+      "destination": "https://carfullv6122dvsalive.vercel.app/api/vehicle"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://www.carfull.co.uk/api/:path*"
+    }
   ]
 }
