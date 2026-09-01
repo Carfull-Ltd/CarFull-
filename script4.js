@@ -1,0 +1,1 @@
+window.addEventListener('load',()=>setTimeout(handleStripeReturn,150));
