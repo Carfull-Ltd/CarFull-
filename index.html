@@ -408,6 +408,9 @@ body{background:#050706!important}
 .garageMotDefect.fail{border-left-color:var(--danger)!important}
 .garageMotDefect.fail b{color:var(--danger)!important}
 .garageMotDefect.advisory b{color:var(--amber)!important}
+
+.spottedOpenCar{width:calc(100% - 24px);margin:10px 12px 2px;padding:11px 12px;border:1px solid #2d382f;border-radius:11px;background:#101612;color:#eef5ef;font:inherit;font-weight:800;display:flex;align-items:center;justify-content:space-between;text-align:left}
+.spottedOpenCar span{color:var(--green);font-size:18px}.storyOpenTap{cursor:pointer}
 </style>
 <style>.pillar{cursor:pointer;display:flex;gap:14px;align-items:center}.pillarIcon{font-size:26px;width:48px;height:48px;border-radius:14px;background:#1a3320;display:grid;place-items:center}.grow{flex:1}.pillar h3{margin:0 0 4px}.pillar p{margin:0;color:#9ca79f;font-size:13px}.price{font-size:28px;font-weight:900}.storyGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.story{min-height:110px;border-radius:14px;background:linear-gradient(145deg,#415346,#172019);padding:10px;display:flex;align-items:flex-end;font-weight:800}.question{padding:12px 0;border-bottom:1px solid #283029}.question:last-child{border:0}.warn{color:#ffcc4d}.screenTitle{display:flex;gap:12px;align-items:center;margin:6px 0 18px}.back{border:0;background:none;color:white;font-size:25px}.count{color:var(--green);font-size:12px;font-weight:800}</style>
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -838,7 +841,7 @@ html, body {
 
 <style>
 .score{cursor:pointer}
-.score:active{transform:scale(.98)}
+.score:active{transform:scale(.98)}.score.noScore{background:#151916!important;border:1px solid #303833}.score.noScore:after{background:#151916!important}.score.noScore b{font-size:27px}.score.noScore small{color:#aab2ac;margin-top:-3px}
 .scoreHint{font-size:11px;color:var(--muted);margin-top:4px}
 </style>
 
@@ -1458,6 +1461,13 @@ html{-webkit-text-size-adjust:100%}
 .app,.spottedPage,.spottedFeed,.spottedPost{touch-action:pan-y!important;}
 .spottedImage{-webkit-user-drag:none;user-select:none;touch-action:pan-y!important;}
 </style>
+
+<style id="carfull-730-spotted-public-social-sticky-fix">
+/* 730: close the scrolling-content slit between the black CarFull header and Spotted tabs. */
+.spottedApp .spottedTop721{
+  top:calc(var(--spotted-header-height, 88px) - 22px)!important;
+}
+</style>
 </head><body data-carfull-build="v6.68.3"><div id="app"></div>
 <script>
 let premiumActive=false;
@@ -1757,6 +1767,11 @@ function passportEvidenceForReg(reg){
 }
 function calculateCarFullScore(v){
  const tests=Array.isArray(v?.motTests)?[...v.motTests]:[];
+ // 713: a vehicle with no MOT history has no evidence to score yet.
+ // Do not manufacture a caution/poor score from empty data.
+ if(!tests.length){
+   return {score:null,label:'Not scored',confidence:'—',parts:{},strengths:[],issues:['No MOT history yet']};
+ }
  const oldest=[...tests].sort((a,b)=>motDateValue(a)-motDateValue(b));
  const newest=[...tests].sort((a,b)=>motDateValue(b)-motDateValue(a));
  const latest=newest[0]||{}, now=Date.now();
@@ -1840,6 +1855,9 @@ function applyCarFullScore(v){
   v.score=detail.score;
   v.scoreDetail=detail;
   return v;
+}
+function hasCarFullScore(v){
+  return v && v.score!==null && v.score!=='' && Number.isFinite(Number(v.score));
 }
 
 function vehicleFromDvsa(v){
@@ -2614,8 +2632,12 @@ async function startStripeCheckout(type,registration=''){
     }
   }
 }
-function buyFullCheck(reg=''){return isNativeIOSBuild()?buyFullCheckNative(reg):startStripeCheckout('full_check',reg)}
-function buyPremium(){return isNativeIOSBuild()?buyCarFullProNative():startStripeCheckout('premium')}
+function websitePurchaseInfo(kind='check'){
+  if(kind==='premium')return alert('CarFull Pro purchases are handled securely in the CarFull iPhone app. You can still redeem a CarFull Pro code on the website.');
+  alert('Full CarFull Checks are purchased securely in the CarFull iPhone app. Website checkout is not enabled yet.');
+}
+function buyFullCheck(reg=''){return isNativeIOSBuild()?buyFullCheckNative(reg):websitePurchaseInfo('check')}
+function buyPremium(){return isNativeIOSBuild()?buyCarFullProNative():websitePurchaseInfo('premium')}
 
 async function handleStripeReturn(){
   const q=new URLSearchParams(window.location.search||'');
@@ -2856,7 +2878,7 @@ function nav(active){
    <div class="${a==='account'?'active':''}" onclick="go('account')">${carfullNavIcon('account')}<small>Account</small></div>
  </div>`
 }
-function wrap(x,n){return `<main class="app"><div class="top"><div></div><div><div class="brand"><span class="carfullWord"><span class="brandCar">Car</span><span class="brandFull">Full</span></span></div><div class="tag">Every car has a story.</div></div><div class="bell" onclick="go('alerts')" style="cursor:pointer">●</div></div>${x}</main>${nav(n)}`}
+function wrap(x,n){const appClass=(n==='stories'&&String(x).includes('spottedPage721'))?'app spottedApp':'app';return `<main class="${appClass}"><div class="top"><div></div><div><div class="brand"><span class="carfullWord"><span class="brandCar">Car</span><span class="brandFull">Full</span></span></div><div class="tag">Every car has a story.</div></div><div class="bell" onclick="go('alerts')" style="cursor:pointer">●</div></div>${x}</main>${nav(n)}`}
 function title(t){return `<div class="screenTitle"><button class="back" onclick="go('home')">‹</button><h2>${t}</h2></div>`}
 function vc(v){
  const key=cleanReg(v.reg),photo=(isPremium()?garagePhotoUrls[key]:'')||'';
@@ -2864,6 +2886,7 @@ function vc(v){
    ?`<div class="garageAvatar"><img src="${photo}" alt="${cfTitleCase(v.make)} ${v.model||''}"></div>`
    :`<button class="garageAvatar garageAddPhotoTile" type="button" onclick="event.stopPropagation();${isPremium()?`handleGaragePhotoClick('${key}')`:`go('premium')`}" aria-label="Add Garage photo"><span class="garageAddPhotoPlus">+</span><small>Add photo</small></button>`;
  return `<section class="card garageVehicleV655 garageSimpleCard" onclick="openDriveVehicle('${v.reg}')">
+   <input id="garagePhoto-${key}" type="file" accept="image/*" style="display:none" onchange="event.stopPropagation();chooseGaragePhoto('${key}',this)">
    <div class="garageVehicleTop">
      ${photoHtml}
      <div class="garageVehicleInfo">
@@ -2871,7 +2894,7 @@ function vc(v){
        <div class="vehicleName">${cfTitleCase(v.make)} ${v.model||''}</div>
        <div class="muted">${v.year||''}${v.mot_expiry?' • MOT '+cfDate(v.mot_expiry):''}</div>
      </div>
-     <div class="score garageVehicleScore" onclick="event.stopPropagation();openScoreByReg('${v.reg}')"><div><b>${Number.isFinite(Number(v.score))?Number(v.score):'—'}</b><small>/100</small></div></div>
+     <div class="score garageVehicleScore ${hasCarFullScore(v)?'':'noScore'}" onclick="event.stopPropagation();openScoreByReg('${v.reg}')"><div><b>${hasCarFullScore(v)?Number(v.score):'—'}</b><small>${hasCarFullScore(v)?'/100':'Not scored'}</small></div></div>
    </div>
  </section>`}
 
@@ -2997,6 +3020,13 @@ async function removeFromDrive(reg){
  driveCar=null;
  go('drive');
 }
+function garageMotDisplayOrder(tests){
+  const rows=Array.isArray(tests)?[...tests]:[];
+  const time=t=>{const d=new Date(String(t?.completedDate||''));return Number.isNaN(d.getTime())?0:d.getTime()};
+  // Match Check: natural vertical DVSA timeline, newest actual test first.
+  return rows.sort((a,b)=>time(b)-time(a));
+}
+
 async function loadGarageStoryPhotos(storyRows){
   if(!sb)return;
   let changed=false;
@@ -3016,7 +3046,7 @@ function vehicle(){
  let v=driveCar||myDrive[0]||null;
  if(!v)return wrap(`${title('Vehicle Details')}<section class="card empty"><b>No vehicle selected</b></section>`,'drive');
  const pp=passports.find(p=>cleanReg(p.reg)===cleanReg(v.reg));
- const tests=Array.isArray(v.motTests)?v.motTests.slice(0,5):[];
+ const tests=garageMotDisplayOrder(v.motTests).slice(0,5);
  const sd=v.scoreDetail||calculateCarFullScore(v);
  const records=pp?(passportRecords[pp.id]||[]):[];
  const history=records.filter(r=>String(r.record_type||'').toLowerCase()!=='story');
@@ -3036,9 +3066,9 @@ function vehicle(){
  <section class="garageCarHero">
    ${photo?`<img class="garageHeroThumb" src="${photo}" alt="${cfTitleCase(v.make)} ${v.model||''}">`:''}
    <div class="garageHeroMain"><div class="reg">${v.reg}</div><h2>${cfTitleCase(v.make)} ${v.model||''}</h2><div class="muted">${[v.year,cfTitleCase(v.fuel_type),cfTitleCase(v.colour)].filter(Boolean).join(' • ')}</div></div>
-   <div class="score garageHeroScore" onclick="openScoreByReg('${v.reg}')"><div><b>${Number.isFinite(Number(v.score))?v.score:'—'}</b><small>/100</small></div></div>
+   <div class="score garageHeroScore ${hasCarFullScore(v)?'':'noScore'}" onclick="openScoreByReg('${v.reg}')"><div><b>${hasCarFullScore(v)?v.score:'—'}</b><small>${hasCarFullScore(v)?'/100':'Not scored'}</small></div></div>
  </section>
- <section class="garageScrollSection"><div class="garageSectionHead"><h3>Vehicle</h3><b>${sd.score}/100</b></div><div class="garageQuickGrid"><div><span>CarFull Score</span><b>${sd.label}</b></div><div><span>Latest mileage</span><b>${tests[0]?.odometerValue?Number(tests[0].odometerValue).toLocaleString('en-GB'):'—'}</b></div><div><span>MOT</span><b>${v.mot_expiry?cfDate(v.mot_expiry):'Check live data'}</b></div><div><span>Fuel</span><b>${cfTitleCase(v.fuel_type)||'—'}</b></div></div><button class="garageTextBtn" onclick="openScoreByReg('${v.reg}')">Why this score?</button></section>
+ <section class="garageScrollSection"><div class="garageSectionHead"><h3>Vehicle</h3><b>${sd.score===null?'Not scored':sd.score+'/100'}</b></div><div class="garageQuickGrid"><div><span>CarFull Score</span><b>${sd.score===null?'Not scored':sd.label}</b></div><div><span>Latest mileage</span><b>${tests[0]?.odometerValue?Number(tests[0].odometerValue).toLocaleString('en-GB'):'—'}</b></div><div><span>MOT</span><b>${v.mot_expiry?cfDate(v.mot_expiry):'Check live data'}</b></div><div><span>Fuel</span><b>${cfTitleCase(v.fuel_type)||'—'}</b></div></div><button class="garageTextBtn" onclick="openScoreByReg('${v.reg}')">${sd.score===null?'Why no score?':'Why this score?'}</button></section>
  <section class="garageScrollSection"><div class="garageSectionHead"><h3>MOT history</h3><span>${tests.length?'Latest '+tests.length:''}</span></div>${tests.length?tests.map(t=>{const defects=Array.isArray(t.defects)?t.defects:[];return `<details class="garageMotLine garageMotExpand"><summary><div><b>${cfDate(String(t.completedDate||'').slice(0,10))||'Date unavailable'}</b><span class="${String(t.testResult||'').toUpperCase()==='PASSED'?'pass':'fail'}">${t.testResult||''}</span></div><small>${cfMileage(t.odometerValue,t.odometerUnit)}${t.expiryDate?' • expires '+cfDate(t.expiryDate):''}</small></summary><div class="garageMotDetail">${defects.length?defects.map(d=>{const dt=String(d.type||'').trim(),dl=dt.toLowerCase(),failed=String(t.testResult||'').toUpperCase()!=='PASSED',cls=dl.includes('advis')?'advisory':(dl.includes('danger')||dl.includes('major')||failed?'fail':'');const label=dt.toUpperCase()==='PRS'?'PRS':(cfTitleCase(dt)||'MOT item');return `<div class="garageMotDefect ${cls}"><b>${label}</b><span>${d.text||d.description||'No further detail supplied.'}</span></div>`}).join(''):`<div class="garageMotClear">No advisories or defects recorded.</div>`}</div></details>`}).join(''):`<p class="muted">Open while online to refresh DVSA MOT history.</p>`}</section>
  <section class="garageScrollSection"><div class="garageSectionHead"><h3>Car History</h3>${pp?`<span>${history.length} records</span>`:''}</div>${pp?histHtml:`<p class="muted">Keep servicing, repairs and evidence with the car.</p>`}<button class="btn ${pp?'':'secondary'}" onclick="${pp?`activePassportId='${pp.id}';go('addMaintenance')`:`createPassportByReg('${v.reg}')`}">${pp?'+ Add history':'Start Car History'}</button></section>
  <section class="garageScrollSection"><div class="garageSectionHead"><h3>Story</h3>${pp?`<span>${stories.length}</span>`:''}</div>${pp?storyHtml:`<p class="muted">Photos and moments from this car’s life.</p>`}${pp?`<button class="btn secondary" onclick="activePassportId='${pp.id}';go('addCarStory')">+ Add to story</button>`:''}</section>
@@ -3072,7 +3102,7 @@ function vehicleResult(){
  const mot=v.motTests?.[0]||{};
  const motValid=(mot.testResult||'').toUpperCase()==='PASSED' || !!mot.expiryDate;
  return wrap(`${title('Vehicle Details')}
- <section class="card liveVehicleHero"><div class="vehicleIdentity"><div class="reg">${v.reg}</div><span class="vehicleName">${cfTitleCase(v.make)} ${v.model||''}</span><div class="muted vehicleMeta">${[v.year,cfTitleCase(v.fuel_type),cfTitleCase(v.colour)].filter(Boolean).join(' • ')}</div></div><div class="score" onclick="openScoreByReg(\'${v.reg}\')"><div><b>${v.score}</b><small>/100</small></div></div></section>
+ <section class="card liveVehicleHero"><div class="vehicleIdentity"><div class="reg">${v.reg}</div><span class="vehicleName">${cfTitleCase(v.make)} ${v.model||''}</span><div class="muted vehicleMeta">${[v.year,cfTitleCase(v.fuel_type),cfTitleCase(v.colour)].filter(Boolean).join(' • ')}</div></div><div class="score ${hasCarFullScore(v)?'':'noScore'}" onclick="openScoreByReg(\'${v.reg}\')"><div><b>${hasCarFullScore(v)?v.score:'—'}</b><small>${hasCarFullScore(v)?'/100':'Not scored'}</small></div></div></section>
  <div class="heroStatus">
    <div class="box"><small>MOT STATUS</small><b class="${motValid?'pass':'fail'}">${motValid?'✓ Valid':'Check history'}</b><div class="muted">${mot.expiryDate?'Until '+cfDate(mot.expiryDate):'See MOT records'}</div></div>
    <div class="box"><small>DATA SOURCE</small><b class="pass">DVSA</b><div class="muted">Official MOT history</div></div>
@@ -3095,10 +3125,40 @@ function vehicleResult(){
    <div class="valueLine"><span>Full CarFull Check</span><b>${currentFullCheckPrice()}</b></div>
    ${isPremium()?'<div class="muted" style="margin-top:5px">CarFull Pro Price • You save £2</div>':'<div class="muted" style="margin-top:5px">CarFull Pro members pay £7.99</div>'}
    <button class="btn" style="margin-top:12px" onclick="buyFullCheck('${cleanReg(v.reg)}')">Get Full Check — ${currentFullCheckPrice()}</button>
-   <p class="muted" style="margin-top:10px">${isNativeIOSBuild()?'Payment is handled securely by Apple.':'Secure checkout by Stripe.'}</p>
+   <p class="muted" style="margin-top:10px">${isNativeIOSBuild()?'Payment is handled securely by Apple.':'Purchase securely in the CarFull iPhone app.'}</p>
  </section>
  <div class="actionStack"><button class="btn secondary" onclick="addCheckedToDrive()">+ Add to Garage</button></div>
  <section class="card"><b>Vehicle history</b><p class="muted">View the MOT records returned for this registration.</p><button class="btn secondary" onclick="checkTab='mot';go('result')">View MOT history</button></section>`,'home')
+}
+
+async function addCheckedToDrive(){
+  if(!requireAccount())return;
+  const v=checkedCar;
+  if(!v?.reg)return alert('Run a vehicle check first.');
+  const clean=cleanReg(v.reg);
+  const existing=myDrive.find(x=>cleanReg(x.reg)===clean);
+  if(!existing && myDrive.filter(x=>!isLegacyDemoVehicle(x)).length>=garageLimit()){
+    return alert(isPremium()?'Your CarFull Pro Garage is full (5 cars).':'Your free Garage includes 1 car. CarFull Pro unlocks up to 5 cars.');
+  }
+  const payload={user_id:currentUser.id,registration:clean,make:v.make||null,model:v.model||null,year:v.year||null,colour:v.colour||null,fuel_type:v.fuel_type||null,engine_size:v.engine_size||null,mot_expiry:v.mot_expiry||v.motTests?.[0]?.expiryDate||null,score:v.score};
+  const updateFields={registration:payload.registration,make:payload.make,model:payload.model,year:payload.year,colour:payload.colour,fuel_type:payload.fuel_type,engine_size:payload.engine_size,mot_expiry:payload.mot_expiry,score:payload.score};
+  if(existing?.dbid){
+    const {error}=await sb.from('garage_vehicles').update(updateFields).eq('id',existing.dbid).eq('user_id',currentUser.id);
+    if(error)return alert('Could not refresh Garage car: '+error.message);
+    await saveRecentSearch(v);invalidateCache('garage');await loadGarage(true);await trackEvent('garage_vehicle_refreshed',{registration:clean,source:'check'});go('drive');return;
+  }
+  let {error}=await sb.from('garage_vehicles').insert(payload);
+  if(error && (error.code==='23505' || /duplicate key|unique constraint/i.test(String(error.message||'')))){
+    const {data:row,error:findError}=await sb.from('garage_vehicles').select('id').eq('user_id',currentUser.id).eq('registration',clean).maybeSingle();
+    if(findError)return alert('Could not refresh Garage car: '+findError.message);
+    if(row?.id){
+      const {error:updateError}=await sb.from('garage_vehicles').update(updateFields).eq('id',row.id).eq('user_id',currentUser.id);
+      if(updateError)return alert('Could not refresh Garage car: '+updateError.message);
+      error=null;
+    }
+  }
+  if(error)return alert('Could not save Garage car: '+error.message);
+  await saveRecentSearch(v);invalidateCache('garage');await loadGarage(true);await trackEvent('garage_vehicle_added',{registration:clean,source:'check'});go('drive');
 }
 
 function startBuyingCheck(){checkTab='summary';go('result')}
@@ -3194,7 +3254,7 @@ function result(){
    <div class="valueLine"><span>Full CarFull Check</span><b>${currentFullCheckPrice()}</b></div>
    ${isPremium()?'<div class="muted" style="margin-top:5px">CarFull Pro Price • You save £2</div>':'<div class="muted" style="margin-top:5px">CarFull Pro members pay £7.99</div>'}
    <button class="btn" style="margin-top:12px" onclick="buyFullCheck('${cleanReg(v.reg)}')">Get Full Check — ${currentFullCheckPrice()}</button>
-   <p class="muted" style="margin-top:10px">${isNativeIOSBuild()?'Payment is handled securely by Apple.':'Secure checkout by Stripe.'}</p>
+   <p class="muted" style="margin-top:10px">${isNativeIOSBuild()?'Payment is handled securely by Apple.':'Purchase securely in the CarFull iPhone app.'}</p>
  </section>
  ${motHistoryTimeline(v)}
  ${sellerQuestions(v)}
@@ -3524,7 +3584,7 @@ async function loadCommunityProfile(){
   try{
     const {data,error}=await sb
       .from('community_profiles')
-      .select('user_id,username')
+      .select('user_id,username,is_pro')
       .eq('user_id',currentUser.id)
       .maybeSingle();
     if(error){console.warn('Community profile load failed',error);return}
@@ -3551,7 +3611,7 @@ async function saveCommunityUsername(){
     const {data,error}=await sb
       .from('community_profiles')
       .upsert(payload,{onConflict:'user_id'})
-      .select('user_id,username')
+      .select('user_id,username,is_pro')
       .single();
 
     if(error){
@@ -3592,7 +3652,7 @@ async function loadStoryOwnerProfiles(){
   const ids=[...new Set([...storyUserIds,...commentUserIds])];
   if(!ids.length)return;
   try{
-    const {data,error}=await sb.from('community_profiles').select('user_id,username').in('user_id',ids);
+    const {data,error}=await sb.from('community_profiles').select('user_id,username,is_pro').in('user_id',ids);
     if(error){console.warn('Story profile load failed',error);return}
     for(const row of (data||[]))storyOwnerProfiles[row.user_id]=row;
   }catch(e){console.warn('Story profile load failed',e)}
@@ -3601,7 +3661,7 @@ async function loadStoryOwnerProfiles(){
 
 async function loadStoryInteractions(){
   storyInteractionsLoaded=true;
-  if(!sb||!currentUser)return;
+  if(!sb)return;
   const rows=communityStoryRows();
   const ids=rows.map(x=>x.r.id).filter(Boolean);
   if(!ids.length)return;
@@ -3612,7 +3672,7 @@ async function loadStoryInteractions(){
     ]);
     if(!likeErr){
       for(const id of ids){
-        const mine=(likes||[]).some(x=>String(x.story_id||'')===String(id||'')&&String(x.user_id||'')===String(currentUser.id||''));
+        const mine=!!currentUser && (likes||[]).some(x=>String(x.story_id||'')===String(id||'')&&String(x.user_id||'')===String(currentUser.id||''));
         const count=(likes||[]).filter(x=>x.story_id===id).length;
         storyInteractionState[id]={...(storyInteractionState[id]||{}),liked:mine,likeCount:count};
       }
@@ -3659,8 +3719,7 @@ async function toggleStoryLike(storyId,btn){
 }
 
 async function openStoryComments(storyId){
-  if(!currentUser)return go('account');
-  if(!(await ensureCommunityUsername()))return;
+  if(currentUser && !(await ensureCommunityUsername()))return;
   const card=document.querySelector(`[data-story-id="${storyId}"]`);
   const pane=card?.querySelector('.storyCommentsPane');
   if(!pane)return;
@@ -3811,6 +3870,52 @@ async function loadGlobalCommunityStories(force=false){
   globalCommunityStoriesError='';
 
   try{
+    // 713: public Spotted feed must work on a fresh website session as well as in-app.
+    // Use a narrow SECURITY DEFINER RPC (installed once in Supabase) so public Story
+    // cards do not depend on broad read access to private Passport tables.
+    try{
+      const {data:rpcRows,error:rpcError}=await sb.rpc('get_public_community_stories');
+      if(!rpcError && Array.isArray(rpcRows)){
+        globalCommunityStoryRows=rpcRows.map(x=>({
+          pp:{
+            id:x.passport_id,
+            reg:displayReg(x.registration||''),
+            make:x.make||'Vehicle',
+            model:x.model||'',
+            year:x.year||'',
+            status:'active',
+            current_keeper_id:null,
+            is_public:true
+          },
+          r:{
+            id:x.story_id,
+            passport_id:x.passport_id,
+            user_id:x.user_id,
+            record_type:'Story',
+            record_date:x.record_date,
+            title:x.title||'',
+            description:x.description||'',
+            provider:'Community',
+            created_at:x.created_at,
+            is_pro:x.is_pro ?? x.carfull_pro ?? x.pro_active ?? x.premium_active ?? x.is_premium ?? null
+          },
+          ev:x.evidence_id?{
+            id:x.evidence_id,
+            passport_id:x.passport_id,
+            record_id:x.story_id,
+            evidence_type:'photo',
+            object_path:x.object_path,
+            created_at:x.evidence_created_at||x.created_at
+          }:null
+        }));
+        globalCommunityStoriesLoaded=true;
+        storyOwnerProfilesLoaded=false;
+        storyInteractionsLoaded=false;
+        return;
+      }
+    }catch(rpcErr){console.warn('Public Story RPC unavailable; using signed-in fallback',rpcErr)}
+
+    // Signed-in/backwards-compatible fallback.
     const {data:records,error:recordsError}=await sb
       .from('passport_records')
       .select('id,passport_id,user_id,record_type,record_date,mileage,title,description,provider,cost,created_at')
@@ -3878,6 +3983,32 @@ async function loadGlobalCommunityStories(force=false){
   }
 }
 
+function patchCommunityStoryPhoto(evidenceId,url){
+  if(!evidenceId||!url)return;
+  try{
+    document.querySelectorAll(`[data-story-evidence="${CSS.escape(String(evidenceId))}"]`).forEach(el=>{
+      if(el.tagName==='IMG'){
+        el.src=url;
+        el.classList.remove('spottedImageEmpty');
+        return;
+      }
+      if(el.classList.contains('liveStoryBubble')||el.classList.contains('carRecPhoto')){
+        el.style.backgroundImage=`url("${String(url).replace(/"/g,'%22')}")`;
+        el.textContent='';
+        return;
+      }
+      if(el.classList.contains('spottedImage')){
+        const img=document.createElement('img');
+        img.className='spottedImage';
+        img.alt='Car';
+        img.src=url;
+        img.dataset.storyEvidence=String(evidenceId);
+        el.replaceWith(img);
+      }
+    });
+  }catch(e){}
+}
+
 async function loadCommunityStoryPhotos(){
   if(!sb)return;
   const rows=communityStoryRows();
@@ -3885,7 +4016,10 @@ async function loadCommunityStoryPhotos(){
     if(!ev || !ev.object_path || storyPhotoUrls[ev.id])continue;
     try{
       const {data,error}=await sb.storage.from('passport-evidence').createSignedUrl(ev.object_path,3600);
-      if(!error && data?.signedUrl)storyPhotoUrls[ev.id]=data.signedUrl;
+      if(!error && data?.signedUrl){
+        storyPhotoUrls[ev.id]=data.signedUrl;
+        patchCommunityStoryPhoto(ev.id,data.signedUrl);
+      }
     }catch(e){}
   }
 }
@@ -4026,7 +4160,6 @@ function storyCar(){
 
   const pp=rows[0].pp;
   const ownerProfile=profileForUserId(rows[0].r.user_id);
-  const followers=Number(carFollowInfo(pp.id).count||0);
 
   if(sb){
     const missing=rows.some(({ev})=>ev&&ev.object_path&&!storyPhotoUrls[ev.id]);
@@ -4057,11 +4190,8 @@ function storyCar(){
         <div>${pp.year||''}${pp.reg?' • '+pp.reg:''}</div>
         <small>Owned by @${ownerProfile.username||'CarFullUser'}</small>
       </div>
-      <div class="carProfileStats"><b>${followers.toLocaleString()}</b><span>${followers===1?'follower':'followers'}</span><b>${rows.length}</b><span>${rows.length===1?'story':'stories'}</span></div>
+      <div class="carProfileStats"><b>${rows.length}</b><span>${rows.length===1?'story':'stories'}</span></div>
       <div class="carProfileActions">
-        ${currentUser&&String(rows[0].r.user_id||'')===String(currentUser.id||'')
-          ? `<button class="carProfileFollow following" disabled>Your car</button>`
-          : `<button class="carProfileFollow ${carFollowInfo(pp.id).following?'following':''}" onclick="toggleCarFollow('${pp.id}','${rows[0].r.id}',this);setTimeout(render,250)">${carFollowInfo(pp.id).following?'Following':'Follow car'}</button>`}
         ${pp.is_public?`<button class="carProfileHistory" onclick="openViewablePassport('${pp.id}')">View History</button>`:`<button class="carProfileHistory" disabled>History private</button>`}
       </div>
     </section>
@@ -4136,7 +4266,7 @@ function liveCommunityStories(){
 
 let socialFeedMode='discover';
 function setSocialFeedMode(mode){socialFeedMode=mode==='following'?'following':'discover';render()}
-function socialFeedTabs(){return `<div class="socialFeedTabs"><button class="${socialFeedMode==='discover'?'active':''}" onclick="setSocialFeedMode('discover')">Discover</button><button class="${socialFeedMode==='following'?'active':''}" onclick="setSocialFeedMode('following')">Following</button></div>`}
+function socialFeedTabs(){return `<div class="socialFeedTabs"><button class="active" onclick="setSocialFeedMode('discover')">Discover</button></div>`}
 
 function renderKeepingAppScroll(){
   const scroller=document.querySelector('.app');
@@ -4153,7 +4283,7 @@ function stories(){
 
   const rows=communityStoryRows();
 
-  if(rows.length && sb){
+  if((rows.length||spottedPostRows.length) && sb){
     if(currentUser && !communityProfileLoaded && !window.__communityProfileLoadPending){
       window.__communityProfileLoadPending=true;
       loadCommunityProfile().finally(()=>{
@@ -4262,7 +4392,7 @@ function fullCheckCheckout(){let v=checkedCar||car;return wrap(`${title('Checkou
 <div class="valueLine"><span>Full provenance check</span><b>${currentFullCheckPrice()}</b></div>
 ${isPremium()?'<div class="valueLine"><span>CarFull Pro member saving</span><b>£2.00</b></div>':''}
 <div class="valueLine"><span>Total</span><b>${currentFullCheckPrice()}</b></div>
-<p class="muted">${isNativeIOSBuild()?'Payment is handled securely by Apple.':'Secure checkout is handled by Stripe. CarFull does not store card details.'}</p>
+<p class="muted">${isNativeIOSBuild()?'Payment is handled securely by Apple.':'CarFull Pro purchases are handled in the CarFull iPhone app. You can redeem a Pro code here on the website.'}</p>
 <button class="btn" onclick="buyFullCheck('${cleanReg(v.reg)}')">Pay ${currentFullCheckPrice()}</button></section>`,'home')}
 
 function runDemoFullCheck(){alert('Prototype payment approved ✓\n\nRunning Full CarFull Check...');go('fullCheckReport')}
@@ -4325,7 +4455,7 @@ function myChecks(){
  </section>`).join(''):'<section class="card empty"><b>No real reports loaded yet</b><p class="muted">If you already paid for a Full Check, recover it below.</p></section>'}
  <section class="card">
    <b>Recover a paid check</b>
-   <p class="muted">Already paid? Enter that registration and CarFull will verify your ${isNativeIOSBuild()?'Apple':'Stripe'} purchase before requesting the real VDICheck data.</p>
+   <p class="muted">Already paid? Enter that registration and CarFull will verify your ${isNativeIOSBuild()?'Apple':'CarFull'} purchase before requesting the real VDICheck data.</p>
    <input id="recoverCheckReg" class="input" placeholder="e.g. MJ14 LCU" autocapitalize="characters">
    <button class="btn" style="margin-top:10px" onclick="recoverPaidFullCheck()">Load paid report</button>
  </section>`,'account')
@@ -4369,7 +4499,7 @@ ${isPremium()
 <div class="codeBox"><input id="promoInput" placeholder="ENTER CODE" autocomplete="off"></div>
 <button class="btn" style="margin-top:12px" onclick="applyPromoCode()">Redeem code</button>`}
 </section>
-<section class="card"><b>CarFull Pro includes</b><p class="muted">Up to 5 cars in Garage • full history for all 5 cars • comments on Spotted • £7.99 CarFull Checks</p></section>`,'account')}
+<section class="card"><b>CarFull Pro includes</b><p class="muted">Up to 5 cars in Garage • full history for all 5 cars • CarFull Pro shield • £7.99 CarFull Checks</p></section>`,'account')}
 
 function premium(){return wrap(`${title('CarFull Pro')}
 <section class="card premiumCard premiumV638">
@@ -4380,8 +4510,8 @@ function premium(){return wrap(`${title('CarFull Pro')}
   <div class="premiumMonthly">That’s just 83p a month, billed yearly.</div>
   <div class="premiumFeature"><span>✓</span><div><b>Up to 5 cars in Garage</b><div class="muted">Free includes one car. CarFull Pro lets you build and share a collection of up to five.</div></div></div>
   <div class="premiumFeature"><span>✓</span><div><b>Add photos to your Garage</b><div class="muted">Give every car its own photo and make your Garage feel like your collection.</div></div></div>
-  <div class="premiumFeature"><span>✓</span><div><b>Full history for all 5 cars</b><div class="muted">Photos, maintenance, receipts and memories — one living history for each car.</div></div></div>
-  <div class="premiumFeature"><span>✓</span><div><b>Join the conversation</b><div class="muted">Comment and reply on Stories, not just like them.</div></div></div>
+  <div class="premiumFeature"><span>✓</span><div><b>Add history for all 5 cars</b><div class="muted">Photos, maintenance, receipts and memories — one living history for each car.</div></div></div>
+  <div class="premiumFeature"><span>✓</span><div><b>CarFull Pro shield</b><div class="muted">Get the CarFull Pro shield beside your name in Spotted. Tap the shield to see what CarFull Pro includes.</div></div></div>
   
   <div class="premiumFeature"><span>✓</span><div><b>Save £2 on every CarFull Check</b><div class="muted">CarFull Pro checks are £7.99 instead of £9.99.</div></div></div>
   ${isPremium()
@@ -4390,7 +4520,7 @@ function premium(){return wrap(`${title('CarFull Pro')}
 ${isNativeIOSBuild()?'<button class="btn secondary" style="margin-top:10px" onclick="restoreCarFullPro()">Restore Purchases</button>':''}
 <div class="legalLinks"><a href="https://www.carfull.co.uk/terms/" target="_blank" rel="noopener">Terms of Use</a><span>•</span><a href="https://www.carfull.co.uk/privacy/" target="_blank" rel="noopener">Privacy Policy</a></div>
 </section>
-<section class="card freeCompareV638"><b>CarFull Free is still useful</b><p class="muted">Free registration checks • buy a Full Check when you need one • 1 car in Garage + history • browse Spotted posts • likes • unlimited car follows.</p></section>`,'account')}
+<section class="card freeCompareV638"><b>CarFull Free is still useful</b><p class="muted">Free registration checks • buy a Full Check when you need one • 1 car in Garage + history • browse Spotted posts • likes • comments & replies • unlimited car follows.</p></section>`,'account')}
 
 
 function privacyControls(){return wrap(`${title('Privacy & Data')}
@@ -4477,7 +4607,7 @@ function account(){
  <section class="card"><b>Need help?</b><p class="muted">Email us at hello@carfull.co.uk</p><button type="button" class="btn secondary" style="margin-top:10px" onclick="contactCarFull()">Contact CarFull</button></section>`,'account')
 }
 
-function more(){return wrap(`${title('More')}<section class="card"><b>CarFull</b><p>Free: 1 car in Garage, 1 Car History, Spotted and likes.<br>CarFull Pro: up to 5 cars, full history for all 5, comments on Spotted and £7.99 CarFull Checks.</p></section>`,'more')}
+function more(){return wrap(`${title('More')}<section class="card"><b>CarFull</b><p>Free: 1 car in Garage, 1 Car History, Spotted, likes, comments and replies.<br>CarFull Pro: up to 5 cars, full history for all 5, the CarFull Pro shield and £7.99 CarFull Checks.</p></section>`,'more')}
 
 function findScoreVehicle(reg){
   const key=cleanReg(reg||'');
@@ -4543,6 +4673,7 @@ function scoreSheet(){
  const v=scoreVehicle;
  if(!Array.isArray(v.motTests)||v.motTests.length===0)return '';
  const d=v.scoreDetail||calculateCarFullScore(v);
+ if(d.score===null)return '';
  const parts=Object.values(d.parts);
  return `<div class="modalShade" onclick="closeScore()"><div class="scoreSheet" onclick="event.stopPropagation()">
  <div class="scoreHead"><div><div class="muted">CarFull Score</div><div class="bigScore">${d.score}/100</div><b>${d.label}</b></div><button class="closeSheet" onclick="closeScore()">×</button></div>
@@ -4592,9 +4723,12 @@ async function loadSpottedPosts(force=false){
     if(error)throw error;
     spottedPostRows=data||[];
     spottedPostsLoaded=true;
+    // Spotted posters may arrive after the first Pro lookup. Force a fresh lookup
+    // so members such as Benson get their CarFull Pro badge as soon as posts load.
+    storyProUsersLoaded=false;
     const userIds=[...new Set(spottedPostRows.flatMap(x=>[x.user_id,...((Array.isArray(x.comments)?x.comments:[]).map(c=>c&&c.user_id))]).filter(Boolean))];
     if(userIds.length){
-      const {data:profiles}=await sb.from('community_profiles').select('user_id,username').in('user_id',userIds);
+      const {data:profiles}=await sb.from('community_profiles').select('user_id,username,is_pro').in('user_id',userIds);
       for(const row of (profiles||[]))storyOwnerProfiles[row.user_id]=row;
     }
     const imageRows=spottedPostRows.filter(x=>x.image_path);
@@ -4741,7 +4875,7 @@ function spottedCommentsHtml(x){
   const list=spottedComments(x).filter(c=>c&&!isBlockedUser(c.user_id));
   return `<div class="storyCommentsPane" hidden><div class="storyCommentsList">${list.length?list.map(c=>{const prof=profileForUserId(c.user_id);return `<div class="storyComment"><div class="storyCommentHead"><div class="communityAvatar">${usernameInitial(prof.username)}</div><b>${prof.username||'CarFullUser'}</b>${currentUser?`<button class="commentMenuBtn" aria-label="Comment options" onclick="spottedCommentMenu('${x.id}','${c.id}','${c.user_id}','${String(prof.username||'CarFullUser').replace(/'/g,"\\'")}','${x.user_id}')">•••</button>`:''}</div><span>${c.body||''}</span></div>`}).join(''):'<div class="muted">No comments yet.</div>'}</div><div class="storyCommentComposer"><input class="input" maxlength="280" placeholder="Add a comment…"><button class="btn compactBtn" onclick="submitSpottedComment('${x.id}',this)">Post</button></div></div>`;
 }
-function localSpotFeed(){return spottedPostRows.map(x=>{const user=profileForUserId(x.user_id)?.username||'CarFullUser',photo=spottedPhotoUrls[x.id]||'',own=currentUser&&String(x.user_id||'')===String(currentUser.id||''),likes=spottedLikes(x),comments=spottedComments(x),liked=!!(currentUser&&likes.some(v=>String(v)===String(currentUser.id))),preview=comments.filter(c=>c&&!isBlockedUser(c.user_id)).slice(0,3);return `<article class="spottedPost" data-spotted-id="${x.id}">${own?`<button class="spottedMore spottedPostMenu" onclick="deleteSpottedPost('${x.id}','${String(x.image_path||'').replace(/'/g,"\\'")}')">•••</button>`:''}<p class="spottedCaption">${x.caption||''}</p>${photo?`<img class="spottedImage" src="${photo}" alt="Spotted car" onerror="spottedImageFallback(this,'${String(x.image_path||'').replace(/'/g,"\\'")}')">`:`<div class="spottedImage spottedImageEmpty">Car photo</div>`}<div class="spottedStats">${likes.length?`${likes.length} ${likes.length===1?'like':'likes'}`:''}${likes.length&&comments.length?' · ':''}${comments.length?`${comments.length} ${comments.length===1?'comment':'comments'}`:''}</div><div class="spottedActions"><button class="${liked?'active':''}" onclick="toggleSpottedLike('${x.id}',this)">Like</button><button onclick="openSpottedComments('${x.id}')">Comment</button></div>${preview.length?`<div class="spottedComments">${preview.map(c=>{const p=profileForUserId(c.user_id);return `<div><b>${p.username||'CarFullUser'}</b> ${c.body||''}</div>`}).join('')}${comments.length>3?`<button onclick="openSpottedComments('${x.id}')">View all comments</button>`:''}</div>`:''}${spottedCommentsHtml(x)}</article>`}).join('')}
+function localSpotFeed(mineOnly=false){const rows=(mineOnly&&currentUser)?spottedPostRows.filter(x=>String(x.user_id||'')===String(currentUser.id||'')):spottedPostRows;return rows.map(x=>{const user=profileForUserId(x.user_id)?.username||'CarFullUser',photo=spottedPhotoUrls[x.id]||'',own=currentUser&&String(x.user_id||'')===String(currentUser.id||''),likes=spottedLikes(x),comments=spottedComments(x),liked=!!(currentUser&&likes.some(v=>String(v)===String(currentUser.id))),preview=comments.filter(c=>c&&!isBlockedUser(c.user_id)).slice(0,3);return `<article class="spottedPost spottedLegacy726" data-spotted-id="${x.id}"><div class="spottedHead721"><div class="spottedUser721"><span class="spottedAvatar721">${usernameInitial(user)}</span><span><b>${user}</b>${spottedProBadge(x.user_id)}</span></div>${own?`<button class="spottedMore spottedPostMenu" onclick="deleteSpottedPost('${x.id}','${String(x.image_path||'').replace(/'/g,"\\'")}')">•••</button>`:''}</div>${photo?`<img class="spottedImage" src="${photo}" alt="Spotted car" onerror="spottedImageFallback(this,'${String(x.image_path||'').replace(/'/g,"\\'")}')">`:`<div class="spottedImage spottedImageEmpty">Car photo</div>`}${x.caption?`<p class="spottedCaption">${x.caption}</p>`:''}<div class="spottedStats">${likes.length?`${likes.length} ${likes.length===1?'like':'likes'}`:''}${likes.length&&comments.length?' · ':''}${comments.length?`${comments.length} ${comments.length===1?'comment':'comments'}`:''}</div><div class="spottedActions spottedActions721"><button class="${liked?'active':''}" onclick="toggleSpottedLike('${x.id}',this)">♡ Like</button><button onclick="openSpottedComments('${x.id}')">○ Comment</button><button onclick="spottedShare('${x.id}','')">↗ Share</button></div>${preview.length?`<div class="spottedComments">${preview.map(c=>{const p=profileForUserId(c.user_id);return `<div><b>${p.username||'CarFullUser'}</b> ${c.body||''}</div>`}).join('')}${comments.length>3?`<button onclick="openSpottedComments('${x.id}')">View all comments</button>`:''}</div>`:''}${spottedCommentsHtml(x)}</article>`}).join('')}
 function spotComposer(){return wrap(`${title('Spot a car')}<section class="spotComposer"><h2>What have you spotted?</h2><p class="muted">Share a car you’ve seen. It doesn’t need to be in your Garage.</p><textarea id="spotText" class="input spotText" placeholder="Say something about the car…">${pendingSpotText||''}</textarea><input id="spotPhoto" type="file" accept="image/*" style="display:none" onchange="chooseSpotPhoto(this)">${pendingSpotPhoto?`<img class="spotPreview" src="${pendingSpotPhoto}" alt="Selected car">`:''}<button class="btn secondary" onclick="document.getElementById('spotPhoto').click()">${pendingSpotPhoto?'Change photo':'Choose photo'}</button><button class="btn" onclick="publishSpot()">Post to Spotted</button></section>`,'stories')}
 function startStoryFromFeed(){
   if(!currentUser){go('account');return}
@@ -4823,20 +4957,71 @@ function liveStoryTiles(){
     if(unique.length>=8)break;
   }
   return `<div class="liveStoryTiles">
-    ${unique.map(({pp,ev})=>{const url=ev?storyPhotoUrls[ev.id]:null;return `<button class="liveStoryTile" onclick="openStoryCar('${pp.id}')"><div class="liveStoryBubble"${url?` style="background-image:url('${url.replace(/'/g,'%27')}')"`:''}>${url?'':storyCircleLabel(pp)}</div><span>${pp.model||pp.make||'Car'}</span></button>`}).join('')}
+    ${unique.map(({pp,ev})=>{const url=ev?storyPhotoUrls[ev.id]:null;return `<button class="liveStoryTile" onclick="openStoryCar('${pp.id}')"><div class="liveStoryBubble" data-story-evidence="${ev?.id||''}"${url?` style="background-image:url('${url.replace(/'/g,'%27')}')"`:''}>${url?'':storyCircleLabel(pp)}</div><span>${pp.model||pp.make||'Car'}</span></button>`}).join('')}
   </div>`;
 }
 
-function liveCommunityStories(){
+let spottedFeedTab='all';
+const storyProUsers=new Set();
+let storyProUsersLoaded=false;
+function setSpottedFeedTab(tab){spottedFeedTab=['all','mine'].includes(tab)?tab:'all';renderKeepingAppScroll()}
+function cfPublicProFlag(row){
+  if(!row||typeof row!=='object')return false;
+  const raw=row.is_pro ?? row.carfull_pro ?? row.pro_active ?? row.premium_active ?? row.is_premium ?? row.pro ?? row.premium;
+  if(raw===true||raw===1)return true;
+  const v=String(raw??'').trim().toLowerCase();
+  return ['true','1','active','pro','carfull pro','carfull_pro','premium'].includes(v);
+}
+function storyUserIsPro(userId){
+  const uid=String(userId||'');
+  if(currentUser&&uid===String(currentUser.id||'')&&(isPremium()||premiumActive))return true;
+  const profile=profileForUserId(uid);
+  if(cfPublicProFlag(profile))return true;
+  return storyProUsers.has(uid);
+}
+async function loadStoryProUsers(){
+  if(!sb){storyProUsersLoaded=true;return;}
+  const ids=[...new Set([...communityStoryRows().map(x=>String(x.r?.user_id||'')),...spottedPostRows.map(x=>String(x.user_id||''))].filter(Boolean))];
+  if(!ids.length){storyProUsersLoaded=true;return;}
+  storyProUsers.clear();
+  try{
+    // Badge-safe public source. Sensitive entitlement/payment data remains behind RLS.
+    const {data,error}=await sb.from('community_profiles').select('user_id,username,is_pro').in('user_id',ids);
+    if(error)throw error;
+    for(const row of (data||[])){
+      if(!row.user_id)continue;
+      storyOwnerProfiles[row.user_id]=row;
+      if(row.is_pro===true)storyProUsers.add(String(row.user_id));
+    }
+  }catch(e){console.warn('CarFull Pro badge profile load failed',e)}
+  storyProUsersLoaded=true;
+}
+function spottedProBadge(userId){return storyUserIsPro(userId)?`<button class="spottedProBadge" onclick="event.stopPropagation();go('premium')" aria-label="CarFull Pro"><span class="spottedShield">✓</span> CARFULL PRO</button>`:''}
+function spottedShare(storyId,passportId){
+  const shareUrl=location.origin+location.pathname+'?story='+encodeURIComponent(storyId||'');
+  const text='Spotted on CarFull';
+  if(navigator.share){navigator.share({title:'CarFull Spotted',text,url:shareUrl}).catch(()=>{});return}
+  if(navigator.clipboard?.writeText){navigator.clipboard.writeText(shareUrl).then(()=>alert('Spotted link copied ✓')).catch(()=>alert('Could not copy the link.'));return}
+  alert('Share this Spotted post: '+shareUrl)
+}
+function spottedFilteredRows(){
   const rows=communityStoryRows();
-  const local=localSpotFeed();
+  if(spottedFeedTab==='mine')return currentUser?rows.filter(x=>String(x.r?.user_id||'')===String(currentUser.id||'')):[];
+  return rows;
+}
+function liveCommunityStories(){
+  const rows=spottedFilteredRows();
+  const local=localSpotFeed(spottedFeedTab==='mine');
   const remote=rows.map(({pp,r,ev})=>{
     const url=ev?storyPhotoUrls[ev.id]:null, social=storyInteractionState[r.id]||{}, profile=profileForUserId(r.user_id), user=profile.username||'CarFullUser';
     const caption=r.description||r.title||'', likes=Number(social.likeCount||0), comments=Number(social.commentCount||0);
     const preview=(social.comments||[]).filter(c=>!String(c.body||'').startsWith('[CARFULL_REPORT')&&!isFollowMarker(c.body)&&!isBlockedUser(c.user_id)).slice(0,3);
-    return `<article class="spottedPost" data-story-id="${r.id}">${currentUser&&String(r.user_id||'')!==String(currentUser.id||'')?`<button class="spottedMore spottedPostMenu" onclick="storySafetyMenu('${r.id}','${r.user_id}','${String(user).replace(/'/g,"\\'")}')">•••</button>`:''}${caption?`<p class="spottedCaption">${caption}</p>`:''}${url?`<img class="spottedImage" src="${url}" alt="Car">`:`<div class="spottedImage spottedImageEmpty">Car photo</div>`}<div class="spottedStats">${likes?`${likes} ${likes===1?'like':'likes'}`:''}${likes&&comments?' · ':''}${comments?`${comments} ${comments===1?'comment':'comments'}`:''}</div><div class="spottedActions"><button class="${social.liked?'active':''}" onclick="toggleStoryLike('${r.id}',this)">Like</button><button onclick="openStoryComments('${r.id}')">Comment</button></div>${preview.length?`<div class="spottedComments">${preview.map(c=>{const p=profileForUserId(c.user_id);return `<div><b>${p.username||'CarFullUser'}</b> ${c.body||c.comment||''}</div>`}).join('')}${comments>3?`<button onclick="openStoryComments('${r.id}')">View all comments</button>`:''}</div>`:''}${storyCommentsHtml(r.id,r.user_id)}</article>`;
+    return `<article class="spottedPost" data-story-id="${r.id}"><div class="spottedHead721"><div class="spottedUser721" onclick="openStoryCar('${pp.id}')" role="button" tabindex="0"><span class="spottedAvatar721">${usernameInitial(user)}</span><span><b>${user}</b>${spottedProBadge(r.user_id)}</span></div>${currentUser&&String(r.user_id||'')!==String(currentUser.id||'')?`<button class="spottedMore spottedPostMenu" onclick="storySafetyMenu('${r.id}','${r.user_id}','${String(user).replace(/'/g,"\\'")}')">•••</button>`:''}</div>${url?`<img class="spottedImage storyOpenTap" data-story-evidence="${ev?.id||''}" src="${url}" alt="Car" onclick="openStoryCar('${pp.id}')">`:`<div class="spottedImage spottedImageEmpty storyOpenTap" data-story-evidence="${ev?.id||''}" onclick="openStoryCar('${pp.id}')">Car photo</div>`}${caption?`<p class="spottedCaption storyOpenTap" onclick="openStoryCar('${pp.id}')">${caption}</p>`:''}<button class="spottedOpenCar" onclick="openStoryCar('${pp.id}')">View car &amp; story <span>→</span></button><div class="spottedStats">${likes?`${likes} ${likes===1?'like':'likes'}`:''}${likes&&comments?' · ':''}${comments?`${comments} ${comments===1?'comment':'comments'}`:''}</div><div class="spottedActions spottedActions721"><button class="${social.liked?'active':''}" onclick="toggleStoryLike('${r.id}',this)">♡ Like</button><button onclick="openStoryComments('${r.id}')">○ Comment</button><button onclick="spottedShare('${r.id}','${pp.id}')">↗ Share</button></div>${preview.length?`<div class="spottedComments">${preview.map(c=>{const p=profileForUserId(c.user_id);return `<div><b>${p.username||'CarFullUser'}</b> ${c.body||c.comment||''}</div>`}).join('')}${comments>3?`<button onclick="openStoryComments('${r.id}')">View all comments</button>`:''}</div>`:''}${storyCommentsHtml(r.id,r.user_id)}</article>`;
   }).join('');
-  if(!local&&!remote)return `<section class="spottedEmpty"><b>No spots yet</b><p>Be the first to share something you’ve seen.</p><button class="btn" onclick="startStoryFromFeed()">Spot a car</button></section>`;
+  if(!remote&&!local){
+    if(spottedFeedTab==='mine')return `<section class="spottedEmpty"><b>No Spotted posts yet</b><p>Your own spots will appear here.</p><button class="btn" onclick="startStoryFromFeed()">Spot a car</button></section>`;
+    return `<section class="spottedEmpty"><b>No spots yet</b><p>Be the first to share something you’ve seen.</p><button class="btn" onclick="startStoryFromFeed()">Spot a car</button></section>`;
+  }
   return `<div class="spottedFeed">${local}${remote}</div>`;
 }
 
@@ -4865,18 +5050,16 @@ function carsYouMightLike(){
     <div class="carsYouMightLikeRail">
       ${picks.map(({pp,ev,r})=>{
         const url=ev?storyPhotoUrls[ev.id]:null;
-        const follow=carFollowInfo(pp.id);
         const owner=r?profileForUserId(r.user_id):{username:''};
         const name=`${pp.make||''} ${pp.model||''}`.trim()||'Car';
         const meta=[pp.year||'',owner&&owner.username?`@${owner.username}`:''].filter(Boolean).join(' • ');
         return `<article class="carRecCard">
-          <button class="carRecPhoto" onclick="openStoryCar('${pp.id}')" aria-label="Open ${name}"${url?` style="background-image:url('${url.replace(/'/g,'%27')}')"`:''}>${url?'':storyCircleLabel(pp)}</button>
+          <button class="carRecPhoto" data-story-evidence="${ev?.id||''}" onclick="openStoryCar('${pp.id}')" aria-label="Open ${name}"${url?` style="background-image:url('${url.replace(/'/g,'%27')}')"`:''}>${url?'':storyCircleLabel(pp)}</button>
           <div class="carRecBody">
             <div class="carRecName">${name}</div>
             <div class="carRecMeta">${meta||'CarFull community'}</div>
             <div class="carRecActions">
               <button class="carRecOpen" onclick="openStoryCar('${pp.id}')">View car</button>
-              ${currentUser&&r&&String(r.user_id||'')===String(currentUser.id||'')?'':`<button class="carRecFollow ${follow.following?'following':''}" onclick="toggleCarFollow('${pp.id}','${r?r.id:''}',this)">${follow.following?'Following':'Follow car'}</button>`}
             </div>
           </div>
         </article>`;
@@ -4891,16 +5074,33 @@ function stories(){
   const rows=communityStoryRows();
   if(rows.length && sb){
     if(currentUser && !communityProfileLoaded && !window.__communityProfileLoadPending){window.__communityProfileLoadPending=true;loadCommunityProfile().finally(()=>{window.__communityProfileLoadPending=false;if(screen==='stories')renderKeepingAppScroll()})}
-    if(!storyOwnerProfilesLoaded && !window.__storyOwnerProfileLoadPending){window.__storyOwnerProfileLoadPending=true;loadStoryOwnerProfiles().finally(()=>{window.__storyOwnerProfileLoadPending=false;if(screen==='stories')renderKeepingAppScroll()})}
+    if(!storyOwnerProfilesLoaded && !window.__storyOwnerProfileLoadPending){window.__storyOwnerProfileLoadPending=true;loadStoryOwnerProfiles().finally(()=>{window.__storyOwnerProfileLoadPending=false})}
     const missing=rows.some(({ev})=>ev&&ev.object_path&&!storyPhotoUrls[ev.id]);
-    if(missing&&!window.__storyPhotoLoadPending){window.__storyPhotoLoadPending=true;loadCommunityStoryPhotos().finally(()=>{window.__storyPhotoLoadPending=false;if(screen==='stories')renderKeepingAppScroll()})}
-    if(currentUser&&!storyInteractionsLoaded&&!window.__storyInteractionLoadPending){window.__storyInteractionLoadPending=true;loadStoryInteractions().finally(()=>{window.__storyInteractionLoadPending=false;if(screen==='stories')renderKeepingAppScroll()})}
+    if(missing&&!window.__storyPhotoLoadPending){window.__storyPhotoLoadPending=true;loadCommunityStoryPhotos().finally(()=>{window.__storyPhotoLoadPending=false})}
+    if(!storyInteractionsLoaded&&!window.__storyInteractionLoadPending){window.__storyInteractionLoadPending=true;loadStoryInteractions().finally(()=>{window.__storyInteractionLoadPending=false;if(screen==='stories')renderKeepingAppScroll()})}
+  }
+  // Pro badges apply to both Garage Story posts and standalone Spotted posts.
+  if(sb && (rows.length||spottedPostRows.length) && !storyProUsersLoaded && !window.__storyProLoadPending){
+    window.__storyProLoadPending=true;
+    loadStoryProUsers().finally(()=>{window.__storyProLoadPending=false;if(screen==='stories')renderKeepingAppScroll()});
   }
   const feed=(!globalCommunityStoriesLoaded&&!rows.length)?`<section class="spottedEmpty"><b>Loading Spotted…</b></section>`:globalCommunityStoriesError?`<section class="spottedEmpty"><b>Could not load Spotted</b><p>${globalCommunityStoriesError}</p><button class="btn secondary" onclick="globalCommunityStoriesLoaded=false;globalCommunityStoriesError='';render()">Try again</button></section>`:liveCommunityStories();
-  return wrap(`<div class="spottedPage"><div class="spottedTop spottedTopSimple"><button onclick="startStoryFromFeed()" aria-label="Share a car">＋</button></div>${feed}</div>`,'stories');
+  return wrap(`<div class="spottedPage spottedPage721"><div class="spottedTop721"><div class="spottedTabs721"><button class="${spottedFeedTab==='all'?'active':''}" onclick="setSpottedFeedTab('all')">All</button><button class="${spottedFeedTab==='mine'?'active':''}" onclick="setSpottedFeedTab('mine')">My Spotted</button></div><button class="spottedAdd721" onclick="startStoryFromFeed()" aria-label="Share a car">＋</button></div>${feed}</div>`,'stories');
 }
 
-function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,result,recentSearchHistory,passport,passportUpgrade,passportDetail,evidenceUpload,addMaintenance,scanInvoice,scanServiceStamp,addCarStory,storyPrivacy,viewPassport,stories,spotComposer,storyPicker,storyCar,publicPassport,communityUsername,alerts,fullCheckOffer,fullCheckCheckout,fullCheckReport,myChecks,redeemPremium,premium,passwordReset,privacyControls,deleteAccount,account,more}[screen]||home)()+scoreSheet()}render();initBackend();
+function syncSpottedStickyOffset(){
+  if(screen!=='stories')return;
+  const app=document.querySelector('.spottedApp'), head=app?.querySelector('.top');
+  if(!app||!head)return;
+  const h=Math.ceil(head.getBoundingClientRect().height);
+  app.style.setProperty('--spotted-header-height',h+'px');
+}
+function render(){
+  A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,result,recentSearchHistory,passport,passportUpgrade,passportDetail,evidenceUpload,addMaintenance,scanInvoice,scanServiceStamp,addCarStory,storyPrivacy,viewPassport,stories,spotComposer,storyPicker,storyCar,publicPassport,communityUsername,alerts,fullCheckOffer,fullCheckCheckout,fullCheckReport,myChecks,redeemPremium,premium,passwordReset,privacyControls,deleteAccount,account,more}[screen]||home)()+scoreSheet();
+  if(screen==='stories')requestAnimationFrame(syncSpottedStickyOffset);
+}
+window.addEventListener('resize',()=>{if(screen==='stories')requestAnimationFrame(syncSpottedStickyOffset)});
+render();initBackend();
 </script><script>window.addEventListener('load',()=>setTimeout(handleStripeReturn,150));</script>
 <div id="vehicleLookupOverlay" class="vehicleLookupOverlay" aria-live="polite" aria-busy="true">
   <div class="vehicleLookupBox">
@@ -4969,6 +5169,7 @@ function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,
 </style>
 
 <style id="v700-spotted-polish">
+/* v713: no MOT history = no CarFull Score; public Spotted Story RPC support. */
 /* v700: make Spotted read like a simple community feed, not a floating card. */
 .spottedPage{padding-top:0!important}
 .spottedTopSimple{min-height:54px!important;padding:0 10px 8px!important;align-items:center!important}
@@ -4983,4 +5184,94 @@ function render(){A.innerHTML=({home,drive,addDrive,vehicle,vehicleResult,check,
 }
 .spottedPostMenu{top:8px!important}
 </style>
-</body></html>
+
+<style id="carfull-715-spotted-smooth">
+.spottedFeed{overflow-anchor:none;}
+.spottedPost{contain:layout paint style;content-visibility:auto;contain-intrinsic-size:900px;}
+.spottedImage{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;background:#101312;}
+.spottedImageEmpty{display:flex;align-items:center;justify-content:center;min-height:0;}
+</style>
+<style id="carfull-721-spotted-redesign">
+.spottedPage721{background:#eef1ee!important;margin:0 -14px -30px!important;padding:0 0 28px!important;color:#172019!important;min-height:70vh}
+.spottedTop721{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:rgba(248,250,248,.96);border-bottom:1px solid #d9ded9;padding:8px 12px;backdrop-filter:blur(12px)}
+.spottedTabs721{display:grid;grid-template-columns:auto auto auto;gap:5px;flex:1}.spottedTabs721 button{border:0;background:transparent;color:#687169;font:inherit;font-size:13px;font-weight:850;padding:10px 7px;border-radius:999px;white-space:nowrap}.spottedTabs721 button.active{background:#dff5df;color:#18872e}.spottedAdd721{width:38px;height:38px;border-radius:50%;border:1px solid #cfd6cf;background:#fff;color:#18872e;font-size:25px;line-height:1;flex:0 0 38px}
+.spottedPage721 .spottedFeed{padding:10px 9px}.spottedPage721 .spottedPost{background:#fff!important;border:1px solid #dfe4df!important;border-radius:17px!important;margin:0 0 11px!important;padding:0 0 8px!important;overflow:hidden!important;box-shadow:0 2px 9px rgba(24,35,26,.06)!important;color:#172019!important;contain:layout style!important}
+.spottedHead721{display:flex;align-items:center;justify-content:space-between;padding:11px 12px 7px}.spottedUser721{display:flex;align-items:center;gap:9px;border:0;background:transparent;color:#172019;text-align:left;font:inherit;padding:0;min-width:0}.spottedUser721>span:last-child{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.spottedAvatar721{width:35px;height:35px;border-radius:50%;display:grid!important;place-items:center;background:#e4eee4;color:#237a32;font-weight:900;flex:0 0 35px}.spottedUser721 b{font-size:14px}.spottedProBadge{border:0;background:#e4f7e4;color:#198632;border-radius:999px;padding:4px 7px;font:inherit;font-size:9px;font-weight:950;letter-spacing:.2px;display:inline-flex;align-items:center;gap:4px}.spottedShield{width:14px;height:16px;display:grid;place-items:center;background:#24a33e;color:#fff;clip-path:polygon(50% 0,92% 16%,84% 72%,50% 100%,16% 72%,8% 16%);font-size:9px}
+.spottedPage721 .spottedMore{color:#677168!important}.spottedPage721 .spottedCaption{color:#202822!important;padding:2px 12px 10px!important;font-size:15px!important}.spottedPage721 .spottedImage{background:#e6e9e6!important;aspect-ratio:4/3!important;max-height:none!important}.spottedPage721 .spottedOpenCar{background:#fff!important;color:#1d2920!important;border:0!important;border-top:1px solid #edf0ed!important;border-radius:0!important;width:100%!important;margin:0!important;padding:10px 12px!important}.spottedPage721 .spottedOpenCar span{color:#24973a!important}.spottedPage721 .spottedStats{color:#707a72!important}.spottedActions721{grid-template-columns:1fr 1fr 1fr!important;border-color:#e4e8e4!important}.spottedActions721 button{color:#4c574e!important}.spottedActions721 button+button{border-left:1px solid #e4e8e4!important}.spottedActions721 button.active{color:#24973a!important}.spottedPage721 .spottedComments{background:#f4f6f4!important;color:#303932!important}.spottedPage721 .spottedComments button{color:#687269!important}.spottedPage721 .storyCommentsPane{color:#263029!important}.spottedPage721 .storyComment>span{color:#263029!important}.spottedPage721 .spottedEmpty{color:#69726b!important;background:#fff;border-radius:16px;margin:12px}.spottedPage721 .spottedEmpty b{color:#1c251e!important}
+</style>
+
+<style id="carfull-726-spotted-black-cards">
+/* 726: CarFull-black Spotted canvas, white social cards, solid sticky chrome. */
+.spottedPage721{background:#090b0d!important;color:#172019!important;}
+.spottedPage721 .spottedFeed{background:#090b0d!important;padding:10px 9px 120px!important;}
+.spottedPage721 .spottedPost{background:#fff!important;border-color:#dfe4df!important;box-shadow:none!important;}
+.spottedApp .top{background:#090b0d!important;isolation:isolate!important;box-shadow:0 1px 0 #151a17!important;}
+.spottedApp .top:before{content:"";position:absolute;inset:-40px -16px 0;background:#090b0d;z-index:-1;}
+.spottedApp .spottedTop721{background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-bottom:1px solid #d9ded9!important;}
+.spottedLegacy726 .spottedHead721{padding-top:11px!important;}
+.spottedLegacy726 .spottedUser721{cursor:default!important;}
+.spottedLegacy726 .spottedCaption{background:#fff!important;color:#202822!important;}
+.spottedLegacy726 .spottedActions721{grid-template-columns:1fr 1fr 1fr!important;}
+.spottedProBadge{font-size:10px!important;font-weight:950!important;padding:5px 8px!important;}
+</style>
+
+<style id="carfull-727-spotted-header-pro-fix">
+/* 727: close the sticky-header gap and make every CarFull Pro identity identical. */
+.spottedApp .top{margin-bottom:0!important;}
+.spottedApp .spottedTop721{top:88px!important;z-index:60!important;box-shadow:0 1px 0 #d9ded9!important;}
+.spottedApp .top{z-index:70!important;}
+.spottedPage721 .spottedUser721{width:auto!important;max-width:calc(100% - 44px)!important;justify-content:flex-start!important;cursor:pointer;}
+.spottedPage721 .spottedUser721>span:last-child{display:inline-flex!important;flex:0 1 auto!important;justify-content:flex-start!important;align-items:center!important;gap:7px!important;flex-wrap:nowrap!important;min-width:0!important;}
+.spottedPage721 .spottedUser721 b{flex:0 1 auto!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.spottedPage721 .spottedProBadge{position:static!important;margin:0!important;flex:0 0 auto!important;white-space:nowrap!important;font-size:10px!important;font-weight:950!important;letter-spacing:.2px!important;padding:5px 8px!important;}
+</style>
+</body></html><style id="v719-garage-mot-vertical-fix">
+/* 719: Garage MOT defects/advisories must stack vertically, one full-width item per row. */
+.garageScrollSection .garageMotLine > .garageMotDetail{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+.garageScrollSection .garageMotLine > .garageMotDetail .garageMotDefect{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  margin:7px 0 0!important;
+}
+</style>
+<style id="carfull-725-spotted-polish">
+/* 725: Do not override CarFull's global viewport/scroll system. 720's .app scrolling stays intact. */
+.spottedApp .top{
+  position:sticky!important;
+  top:0!important;
+  z-index:45!important;
+  background:#090b0d!important;
+  margin:0 -16px!important;
+  padding:12px 16px 14px!important;
+}
+.spottedApp .spottedTop721{top:88px!important;z-index:40!important;}
+.spottedPage721 .spottedFeed{padding-bottom:110px!important;}
+.spottedPage721 .spottedPost{content-visibility:visible!important;contain:none!important;}
+.spottedPage721 .spottedCaption{display:block!important;background:#fff!important;color:#202822!important;border:0!important;border-radius:0!important;margin:0!important;padding:11px 12px 8px!important;opacity:1!important;}
+.spottedTabs721{grid-template-columns:1fr 1fr!important;}
+.spottedProBadge{font-size:10px!important;padding:5px 8px!important;}
+.spottedShield{width:15px!important;height:17px!important;}
+</style>
+
+<style id="carfull-728-app-spotted-fix">
+/* 728: app-safe sticky geometry. Measure the real CarFull header instead of hard-coding 88px. */
+.spottedApp .spottedTop721{
+  top:var(--spotted-header-height, 88px)!important;
+  z-index:60!important;
+  margin-top:0!important;
+}
+.spottedApp .top{z-index:70!important;margin-bottom:0!important;}
+.spottedApp .spottedPage721{margin-top:0!important;}
+/* Use one exact badge treatment on every post type. */
+.spottedPage721 .spottedUser721>span:last-child{display:inline-flex!important;align-items:center!important;gap:7px!important;flex-wrap:nowrap!important;}
+.spottedPage721 .spottedProBadge{position:static!important;margin:0!important;white-space:nowrap!important;font-size:10px!important;font-weight:950!important;letter-spacing:.2px!important;padding:5px 8px!important;}
+.spottedPage721 .spottedShield{width:15px!important;height:17px!important;font-size:9px!important;}
+</style>
