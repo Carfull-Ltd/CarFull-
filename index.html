@@ -1468,6 +1468,17 @@ html{-webkit-text-size-adjust:100%}
   top:calc(var(--spotted-header-height, 88px) - 22px)!important;
 }
 </style>
+
+<style id="carfull-build8-launch-fixes">
+/* Build 8: keep shared CarFull branding below the iPhone safe area in native WebViews. */
+.app {
+  padding-top: calc(18px + env(safe-area-inset-top, 0px)) !important;
+}
+/* Existing Garage photos can be replaced without opening the vehicle first. */
+.garageAvatarPhotoWrap{position:relative!important;flex:0 0 auto!important}
+.garageAvatarPhotoWrap .garageAvatar{display:block!important}
+.garageChangePhotoBtn{position:absolute!important;right:-5px!important;bottom:-5px!important;width:27px!important;height:27px!important;border-radius:50%!important;border:1px solid #405047!important;background:#111713!important;color:#76e85b!important;font-size:14px!important;font-weight:900!important;line-height:25px!important;padding:0!important;text-align:center!important;z-index:2!important;box-shadow:0 3px 10px rgba(0,0,0,.35)!important}
+</style>
 </head><body data-carfull-build="v6.68.3"><div id="app"></div>
 <script>
 let premiumActive=false;
@@ -2236,13 +2247,37 @@ async function savePassportRecord(){
 
 async function deletePassportRecord(id){
   if(!confirm('Delete this car history record?')) return;
-  const {error} = await sb.from('passport_records').delete().eq('id',id);
-  if(error) return alert(error.message);
+  const pp=currentPassport();
+  try{
+    // Remove private evidence objects first so deleted history cannot leave orphaned storage behind.
+    let q=sb.from('passport_evidence').select('id,object_path').eq('record_id',id);
+    if(pp?.id)q=q.eq('passport_id',pp.id);
+    const {data:evidence,error:evidenceLoadError}=await q;
+    if(evidenceLoadError)throw evidenceLoadError;
+    const paths=(evidence||[]).map(x=>x.object_path).filter(Boolean);
+    if(paths.length){
+      const {error:storageError}=await sb.storage.from('passport-evidence').remove(paths);
+      if(storageError)throw storageError;
+    }
+    if((evidence||[]).length){
+      const ids=evidence.map(x=>x.id).filter(Boolean);
+      if(ids.length){
+        const {error:metaDeleteError}=await sb.from('passport_evidence').delete().in('id',ids);
+        if(metaDeleteError)throw metaDeleteError;
+      }
+    }
+    const {error}=await sb.from('passport_records').delete().eq('id',id);
+    if(error)throw error;
 
-  const keepId = activePassportId;
-  await loadPassports();
-  activePassportId = keepId;
-  go('passportDetail');
+    const keepId = activePassportId;
+    invalidateCache('passports','evidence');
+    await loadPassports(true);
+    await loadPassportEvidence(true);
+    activePassportId = keepId;
+    go('passportDetail');
+  }catch(err){
+    alert('Could not delete this history record safely: '+(err?.message||err));
+  }
 }
 
 
@@ -2883,7 +2918,7 @@ function title(t){return `<div class="screenTitle"><button class="back" onclick=
 function vc(v){
  const key=cleanReg(v.reg),photo=(isPremium()?garagePhotoUrls[key]:'')||'';
  const photoHtml=photo
-   ?`<div class="garageAvatar"><img src="${photo}" alt="${cfTitleCase(v.make)} ${v.model||''}"></div>`
+   ?`<div class="garageAvatarPhotoWrap" onclick="event.stopPropagation()"><div class="garageAvatar"><img src="${photo}" alt="${cfTitleCase(v.make)} ${v.model||''}"></div><button class="garageChangePhotoBtn" type="button" onclick="event.stopPropagation();handleGaragePhotoClick('${key}')" aria-label="Change Garage photo">✎</button></div>`
    :`<button class="garageAvatar garageAddPhotoTile" type="button" onclick="event.stopPropagation();${isPremium()?`handleGaragePhotoClick('${key}')`:`go('premium')`}" aria-label="Add Garage photo"><span class="garageAddPhotoPlus">+</span><small>Add photo</small></button>`;
  return `<section class="card garageVehicleV655 garageSimpleCard" onclick="openDriveVehicle('${v.reg}')">
    <input id="garagePhoto-${key}" type="file" accept="image/*" style="display:none" onchange="event.stopPropagation();chooseGaragePhoto('${key}',this)">

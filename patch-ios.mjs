@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Release settings for CarFull 1.0 (Build 7).
+// Release settings for CarFull 1.0 (Build 8).
 const projectFiles=['ios/App/Podfile','ios/App/App.xcodeproj/project.pbxproj'];
 for(const file of projectFiles){
   if(!fs.existsSync(file)) continue;
   let s=fs.readFileSync(file,'utf8');
   s=s.replace(/platform :ios, ['"]\d+(?:\.\d+)?['"]/g,"platform :ios, '15.0'");
   s=s.replace(/IPHONEOS_DEPLOYMENT_TARGET = \d+(?:\.\d+)?;/g,'IPHONEOS_DEPLOYMENT_TARGET = 15.0;');
-  s=s.replace(/CURRENT_PROJECT_VERSION = \d+;/g,'CURRENT_PROJECT_VERSION = 7;');
+  s=s.replace(/CURRENT_PROJECT_VERSION = \d+;/g,'CURRENT_PROJECT_VERSION = 8;');
   s=s.replace(/MARKETING_VERSION = [^;]+;/g,'MARKETING_VERSION = 1.0;');
   fs.writeFileSync(file,s);
 }
@@ -34,4 +34,4 @@ fs.writeFileSync(path.join(appIconDir,'Contents.json'),JSON.stringify({
   info:{author:'xcode',version:1}
 },null,2)+'\n');
 
-console.log('CarFull iOS release configured: version 1.0, build 7, iOS 15.0 minimum, final app icon installed.');
+console.log('CarFull iOS release configured: version 1.0, build 8, iOS 15.0 minimum, final app icon installed.');
