@@ -2954,12 +2954,12 @@ function home(){return wrap(`<div class="checkCenter"><div class="hero"><h1 styl
 
 function fullCheckHome(){
  const prefill=cleanReg(checkedCar?.reg||'');
- return wrap(`<div class="checkCenter"><div class="hero"><h1 style="font-size:29px;margin-bottom:5px">Full CarFull Check</h1><p class="muted">Finance, stolen, write-off and other available provenance data before you buy.</p></div><section class="card" style="padding:16px"><label class="label">UK REGISTRATION</label><div class="ukPlateWrap"><div class="ukPlateBadge"><span class="ukFlag">🇬🇧</span><span>UK</span></div><input id="fullCheckReg" class="input" value="${prefill}" style="text-align:center;text-transform:uppercase"></div><button class="btn" style="margin-top:12px" onclick="startFullCheckFromTab()">Continue</button><p class="muted" style="margin-top:10px">${isPremium()?'CarFull Pro price: £7.99':'Full Check: £9.99 • CarFull Pro: £7.99'}</p></section></div>`,'fullcheck')
+ return wrap(`<div class="checkCenter"><div class="hero"><h1 style="font-size:29px;margin-bottom:5px">Full CarFull Check</h1><p class="muted">One deeper check before you buy.</p></div><section class="card fullCheckHero" style="padding:16px"><label class="label">UK REGISTRATION</label><div class="ukPlateWrap"><div class="ukPlateBadge"><span class="ukFlag">🇬🇧</span><span>UK</span></div><input id="fullCheckReg" class="input" value="${prefill}" style="text-align:center;text-transform:uppercase"></div><div class="checkList" style="margin-top:14px"><div class="checkItem"><span>Outstanding finance</span><b>Included</b></div><div class="checkItem"><span>Stolen vehicle check</span><b>Included</b></div><div class="checkItem"><span>Insurance write-off + category</span><b>Included</b></div><div class="checkItem"><span>Mileage + keeper changes</span><b>Included</b></div><div class="checkItem"><span>Import / export / scrapped flags</span><b>Included</b></div></div><div class="valueLine" style="margin-top:8px"><span>${isPremium()?'CarFull Pro price':'Full Check'}</span><b>${currentFullCheckPrice()}</b></div><button class="btn" style="margin-top:12px" onclick="startFullCheckFromTab()">Continue to checkout</button>${!isPremium()?'<p class="muted" style="margin-top:10px">CarFull Pro members pay £7.99.</p>':''}</section></div>`,'fullcheck')
 }
 async function startFullCheckFromTab(){
  const reg=cleanReg(document.getElementById('fullCheckReg')?.value||'');
  if(!reg)return alert('Enter a UK registration.');
- try{await performVehicleLookup(reg,'fullCheckOffer')}catch(e){}
+ try{await performVehicleLookup(reg,'fullCheckCheckout')}catch(e){}
 }
 
 
@@ -4946,9 +4946,10 @@ async function toggleCommentLike(type,id,btn){
   if(!currentUser)return go('account');
   const st=await loadCommentInteraction(type,id),liked=(st.likes||[]).some(x=>String(x)===String(currentUser.id));
   try{
-    if(liked){const {error}=await sb.from('comment_likes').delete().eq('comment_type',type).eq('comment_id',String(id)).eq('user_id',currentUser.id);if(error)throw error;st.likes=st.likes.filter(x=>String(x)!==String(currentUser.id));}
-    else{const {error}=await sb.from('comment_likes').insert({comment_type:type,comment_id:String(id),user_id:currentUser.id});if(error&&String(error.code)!=='23505')throw error;st.likes=[...(st.likes||[]),currentUser.id];}
-    if(btn){btn.classList.toggle('active',!liked);btn.textContent=`♡ ${st.likes.length?st.likes.length+' ':''}Like`;}
+    const {data,error}=await sb.rpc('toggle_comment_like',{p_comment_type:type,p_comment_id:String(id)});if(error)throw error;
+    const nowLiked=!!data;
+    st.likes=nowLiked?[...new Set([...(st.likes||[]),currentUser.id])]:st.likes.filter(x=>String(x)!==String(currentUser.id));
+    if(btn){btn.classList.toggle('active',nowLiked);btn.textContent=`♡ ${st.likes.length?st.likes.length+' ':''}Like`;}
   }catch(e){alert('Could not update comment like. Please try again.')}
 }
 function toggleReplyComposer(btn){const row=btn.closest('.storyComment');const box=row?.querySelector('.commentReplyComposer');if(box){box.hidden=!box.hidden;if(!box.hidden)box.querySelector('input')?.focus()}}
@@ -4956,7 +4957,7 @@ async function submitCommentReply(type,id,btn){
   if(!currentUser)return go('account');if(!(await ensureCommunityUsername()))return;
   const box=btn.closest('.commentReplyComposer'),input=box?.querySelector('input'),body=(input?.value||'').trim();if(!body)return;
   try{
-    const {data,error}=await sb.from('comment_replies').insert({comment_type:type,comment_id:String(id),user_id:currentUser.id,body}).select('id,user_id,body,created_at').single();if(error)throw error;
+    const {data,error}=await sb.rpc('add_comment_reply',{p_comment_type:type,p_comment_id:String(id),p_body:body});if(error)throw error;
     const st=commentInteraction(type,id);st.replies=[...(st.replies||[]),data];input.value='';
     const list=box.parentElement.querySelector('.commentReplies');if(list)list.insertAdjacentHTML('beforeend',`<div class="commentReply"><b>${communityProfile?.username||'You'}</b> ${cfModerationEscape(body)}</div>`);box.hidden=true;
   }catch(e){alert('Could not add reply. Please try again.')}
@@ -5090,7 +5091,8 @@ async function loadStoryProUsers(){
 }
 function spottedProBadge(userId){return storyUserIsPro(userId)?`<button class="spottedProBadge" onclick="event.stopPropagation();go('premium')" aria-label="CarFull Pro"><span class="spottedShield">✓</span> CARFULL PRO</button>`:''}
 async function spottedShare(storyId,passportId){
-  const base=(location.origin&&location.origin!=='null')?location.origin:'https://www.carfull.co.uk';
+  const origin=String(location.origin||'');
+  const base=/^https?:\/\//i.test(origin)?origin:'https://www.carfull.co.uk';
   const shareUrl=base.replace(/\/$/,'')+'/?story='+encodeURIComponent(storyId||'');
   const data={title:'CarFull Spotted',text:'Spotted on CarFull',url:shareUrl};
   try{
