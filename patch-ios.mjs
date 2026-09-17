@@ -1,15 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Release settings for CarFull 1.0.2 (Build 10).
+// Release settings for CarFull 1.0.3 (Build 11).
 const projectFiles=['ios/App/Podfile','ios/App/App.xcodeproj/project.pbxproj'];
 for(const file of projectFiles){
   if(!fs.existsSync(file)) continue;
   let s=fs.readFileSync(file,'utf8');
   s=s.replace(/platform :ios, ['"]\d+(?:\.\d+)?['"]/g,"platform :ios, '15.0'");
   s=s.replace(/IPHONEOS_DEPLOYMENT_TARGET = \d+(?:\.\d+)?;/g,'IPHONEOS_DEPLOYMENT_TARGET = 15.0;');
-  s=s.replace(/CURRENT_PROJECT_VERSION = \d+;/g,'CURRENT_PROJECT_VERSION = 10;');
-  s=s.replace(/MARKETING_VERSION = [^;]+;/g,'MARKETING_VERSION = 1.0.2;');
+  s=s.replace(/CURRENT_PROJECT_VERSION = \d+;/g,'CURRENT_PROJECT_VERSION = 11;');
+  s=s.replace(/MARKETING_VERSION = [^;]+;/g,'MARKETING_VERSION = 1.0.3;');
   fs.writeFileSync(file,s);
 }
 
