@@ -4907,14 +4907,29 @@ async function openSpottedComments(id){
   }
 }
 async function submitSpottedComment(id,el){
-  if(!currentUser)return go('account');
-  if(!(await ensureCommunityUsername()))return;
-  const pane=el.closest('.storyCommentsPane'),input=pane?.querySelector('input'),text=(input?.value||'').trim();if(!text)return;
+  const originalText=el?.textContent||'Post';
+  if(el){el.textContent='Posting…';el.disabled=true}
   try{
-    const {data,error}=await sb.rpc('add_spotted_comment',{p_post_id:Number(id),p_body:text});if(error)throw error;
+    if(!currentUser)throw new Error('You are not signed in.');
+    if(!(await ensureCommunityUsername()))throw new Error('Your CarFull community username is not loaded. Open Account, save your username, then try again.');
+    const pane=el?.closest('.storyCommentsPane');
+    if(!pane)throw new Error('Comment box could not be found.');
+    const input=pane.querySelector('input');
+    const text=(input?.value||'').trim();
+    if(!text)throw new Error('Type a comment first.');
+    const postId=Number(id);
+    if(!Number.isFinite(postId))throw new Error('Invalid Spotted post ID: '+id);
+    const {data,error}=await sb.rpc('add_spotted_comment',{p_post_id:postId,p_body:text});
+    if(error)throw error;
     const row=spottedPostById(id);if(row)row.comments=Array.isArray(data)?data:[];
-    input.value='';await loadSpottedPosts(true);const y=window.scrollY;render();requestAnimationFrame(()=>window.scrollTo(0,y));
-  }catch(e){alert('Could not add comment: '+(e.message||e))}
+    input.value='';
+    await loadSpottedPosts(true);
+    const y=window.scrollY;render();requestAnimationFrame(()=>window.scrollTo(0,y));
+  }catch(e){
+    alert('Could not add comment: '+(e?.message||e));
+  }finally{
+    if(el&&document.body.contains(el)){el.disabled=false;el.textContent=originalText}
+  }
 }
 async function deleteSpottedComment(postId,commentId){
   if(!currentUser)return;
@@ -4971,7 +4986,7 @@ function commentActionsHtml(type,id){const st=commentInteraction(type,id),liked=
 async function primeCommentInteractions(type,ids){await Promise.all((ids||[]).filter(Boolean).map(id=>loadCommentInteraction(type,id)))}
 function spottedCommentsHtml(x){
   const list=spottedComments(x).filter(c=>c&&!isBlockedUser(c.user_id));
-  return `<div class="storyCommentsPane" hidden><div class="storyCommentsList">${list.length?list.map(c=>{const prof=profileForUserId(c.user_id);return `<div class="storyComment"><div class="storyCommentHead"><div class="communityAvatar">${usernameInitial(prof.username)}</div><b>${prof.username||'CarFullUser'}</b>${currentUser?`<button class="commentMenuBtn" aria-label="Comment options" onclick="spottedCommentMenu('${x.id}','${c.id}','${c.user_id}','${String(prof.username||'CarFullUser').replace(/'/g,"\\'")}','${x.user_id}')">•••</button>`:''}</div><span>${c.body||''}</span>${commentActionsHtml('spotted',c.id)}</div>`}).join(''):'<div class="muted">No comments yet.</div>'}</div><form class="storyCommentComposer" onsubmit="event.preventDefault();submitSpottedComment('${x.id}',this.querySelector('.spottedCommentPostBtn'));return false;"><input class="input" maxlength="280" placeholder="Add a comment…"><button type="submit" class="btn compactBtn spottedCommentPostBtn">Post</button></form></div>`;
+  return `<div class="storyCommentsPane" hidden><div class="storyCommentsList">${list.length?list.map(c=>{const prof=profileForUserId(c.user_id);return `<div class="storyComment"><div class="storyCommentHead"><div class="communityAvatar">${usernameInitial(prof.username)}</div><b>${prof.username||'CarFullUser'}</b>${currentUser?`<button class="commentMenuBtn" aria-label="Comment options" onclick="spottedCommentMenu('${x.id}','${c.id}','${c.user_id}','${String(prof.username||'CarFullUser').replace(/'/g,"\\'")}','${x.user_id}')">•••</button>`:''}</div><span>${c.body||''}</span>${commentActionsHtml('spotted',c.id)}</div>`}).join(''):'<div class="muted">No comments yet.</div>'}</div><div class="storyCommentComposer"><input class="input" maxlength="280" placeholder="Add a comment…"><button type="button" class="btn compactBtn spottedCommentPostBtn" data-spotted-post-id="${x.id}" onclick="submitSpottedComment('${x.id}',this)">Post</button></div></div>`;
 }
 function localSpotFeed(mineOnly=false){const rows=(mineOnly&&currentUser)?spottedPostRows.filter(x=>String(x.user_id||'')===String(currentUser.id||'')):spottedPostRows;return rows.map(x=>{const user=profileForUserId(x.user_id)?.username||'CarFullUser',photo=spottedPhotoUrls[x.id]||'',own=currentUser&&String(x.user_id||'')===String(currentUser.id||''),likes=spottedLikes(x),comments=spottedComments(x),liked=!!(currentUser&&likes.some(v=>String(v)===String(currentUser.id))),preview=comments.filter(c=>c&&!isBlockedUser(c.user_id)).slice(0,3);return `<article class="spottedPost spottedLegacy726" data-spotted-id="${x.id}"><div class="spottedHead721"><div class="spottedUser721"><span class="spottedAvatar721">${usernameInitial(user)}</span><span><b>${user}</b>${spottedProBadge(x.user_id)}</span></div>${own?`<button class="spottedMore spottedPostMenu" onclick="deleteSpottedPost('${x.id}','${String(x.image_path||'').replace(/'/g,"\\'")}')">•••</button>`:''}</div>${photo?`<img class="spottedImage" src="${photo}" alt="Spotted car" onerror="spottedImageFallback(this,'${String(x.image_path||'').replace(/'/g,"\\'")}')">`:`<div class="spottedImage spottedImageEmpty">Car photo</div>`}${x.caption?`<p class="spottedCaption">${x.caption}</p>`:''}<div class="spottedStats" ${comments.length?`onclick="openSpottedComments('${x.id}')" role="button"`:``}>${likes.length?`${likes.length} ${likes.length===1?'like':'likes'}`:''}${likes.length&&comments.length?' · ':''}${comments.length?`${comments.length} ${comments.length===1?'comment':'comments'}`:''}</div><div class="spottedActions spottedActions721"><button class="${liked?'active':''}" onclick="toggleSpottedLike('${x.id}',this)">♡ Like</button><button onclick="openSpottedComments('${x.id}')">○ Comment</button><button onclick="spottedShare('${x.id}','')">↗ Share</button></div>${preview.length?`<div class="spottedComments">${preview.map(c=>{const p=profileForUserId(c.user_id);return `<div><b>${p.username||'CarFullUser'}</b> ${c.body||''}</div>`}).join('')}${comments.length>3?`<button onclick="openSpottedComments('${x.id}')">View all comments</button>`:''}</div>`:''}${spottedCommentsHtml(x)}</article>`}).join('')}
 function spotComposer(){return wrap(`${title('Spot a car')}<section class="spotComposer"><h2>What have you spotted?</h2><p class="muted">Share a car you’ve seen. It doesn’t need to be in your Garage.</p><textarea id="spotText" class="input spotText" placeholder="Say something about the car…">${pendingSpotText||''}</textarea><input id="spotPhoto" type="file" accept="image/*" style="display:none" onchange="chooseSpotPhoto(this)">${pendingSpotPhoto?`<img class="spotPreview" src="${pendingSpotPhoto}" alt="Selected car">`:''}<button class="btn secondary" onclick="document.getElementById('spotPhoto').click()">${pendingSpotPhoto?'Change photo':'Choose photo'}</button><button class="btn" onclick="publishSpot()">Post to Spotted</button></section>`,'stories')}
