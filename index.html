@@ -4914,7 +4914,8 @@ async function submitSpottedComment(id,el){
     if(!(await ensureCommunityUsername()))throw new Error('Your CarFull community username is not loaded. Open Account, save your username, then try again.');
     const pane=el?.closest('.storyCommentsPane');
     if(!pane)throw new Error('Comment box could not be found.');
-    const input=pane.querySelector('input');
+    const composer=el?.closest('.storyCommentComposer');
+    const input=composer?.querySelector(':scope > input.input');
     const text=(input?.value||'').trim();
     if(!text)throw new Error('Type a comment first.');
     const postId=Number(id);
