@@ -1301,9 +1301,9 @@ html, body {
 .ukPlateWrap{position:relative!important;display:flex!important;align-items:stretch!important;width:100%!important}
 .ukPlateBadge{width:48px!important;flex:0 0 48px!important;background:#1558a6!important;color:#fff!important;border:3px solid #d7dadd!important;border-right:0!important;border-radius:10px 0 0 10px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;font-size:12px!important;font-weight:900!important;line-height:1.05!important;letter-spacing:.04em!important}
 .ukPlateBadge .ukFlag{font-size:15px!important;line-height:1!important;margin-bottom:3px!important}
-.ukPlateWrap #homeReg{border-radius:0 10px 10px 0!important;flex:1!important;min-width:0!important}
+.ukPlateWrap #homeReg,.ukPlateWrap #fullCheckReg{border-radius:0 10px 10px 0!important;flex:1!important;min-width:0!important}
 /* CarFull v6.69: compact Social Hub + UK plate badge */
-#homeReg{
+#homeReg,#fullCheckReg{
   background:#fff!important;
   color:#090909!important;
   border:3px solid #d7dadd!important;
@@ -1316,7 +1316,9 @@ html, body {
   text-align:center!important;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)!important;
 }
-#homeReg:focus{outline:none!important;border-color:#fff!important;box-shadow:0 0 0 2px var(--green)!important}
+#homeReg:focus,#fullCheckReg:focus{outline:none!important;border-color:#fff!important;box-shadow:0 0 0 2px var(--green)!important}
+/* Full Check deliberately uses the exact same UK registration control as Free Check. */
+
 .storiesPage .storyStrip,
 .storiesPage .socialSectionLabel:not(.feedLabel){display:none!important}
 .storiesPage .carsYouMightLike{padding:10px 0 10px!important}
@@ -3787,20 +3789,23 @@ async function submitStoryComment(storyId,el){
   const input=pane?.querySelector('input');
   const text=(input?.value||'').trim();
   if(!text)return;
+  const restore=setBusy(el,'Posting…');
   try{
-    const {data,error}=await sb.from('story_comments').insert({
+    const {error}=await sb.from('story_comments').insert({
       story_id:storyId,user_id:currentUser.id,body:text,created_at:new Date().toISOString()
-    }).select('id,story_id,user_id,body,created_at').single();
+    });
     if(error)throw error;
-    const st=storyInteractionState[storyId]||{};
-    st.comments=[...(st.comments||[]),data];
-    st.commentCount=st.comments.length;
-    storyInteractionState[storyId]=st;
     input.value='';
+    await loadStoryInteractions(true);
     render();
+    setTimeout(()=>{
+      const card=document.querySelector(`[data-story-id="${storyId}"]`);
+      const freshPane=card?.querySelector('.storyCommentsPane');
+      if(freshPane)freshPane.hidden=false;
+    },0);
   }catch(e){alert('Could not add comment: '+(e.message||e))}
+  finally{restore()}
 }
-
 
 async function cfModerationDeleteComment(storyId,commentId){
   if(!currentUser)return;
@@ -5334,6 +5339,14 @@ render();initBackend();
 .spottedPage721 .storyCommentHead b,.spottedPage721 .storyComment>span{color:#202822!important}
 .spottedPage721 .storyCommentComposer .input{background:#fff!important;color:#202822!important;border-color:#d8dfda!important}
 .spottedStats[role="button"]{cursor:pointer;text-decoration:none}
+</style>
+
+<style id="carfull-fullcheck-plate-final">
+.fullCheckHero .ukPlateWrap{display:flex!important;align-items:stretch!important;width:100%!important;background:#fff!important;border:3px solid #d8d8d8!important;border-radius:10px!important;overflow:hidden!important;min-height:62px!important;box-sizing:border-box!important}
+.fullCheckHero .ukPlateBadge{width:48px!important;flex:0 0 48px!important;background:#1558a6!important;color:#fff!important;border:0!important;border-radius:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important}
+.fullCheckHero .ukPlateBadge .ukFlag{font-size:16px!important;margin-bottom:3px!important}
+.fullCheckHero #fullCheckReg{display:block!important;flex:1!important;min-width:0!important;height:62px!important;margin:0!important;padding:6px 12px!important;border:0!important;border-radius:0!important;background:#fff!important;color:#050505!important;-webkit-text-fill-color:#050505!important;caret-color:#050505!important;font-size:28px!important;font-weight:900!important;letter-spacing:.11em!important;text-align:center!important;text-transform:uppercase!important;box-shadow:none!important;appearance:none!important;-webkit-appearance:none!important}
+.fullCheckHero #fullCheckReg:focus{outline:none!important;background:#fff!important;box-shadow:inset 0 0 0 2px #69e94f!important}
 </style>
 </body></html><style id="v719-garage-mot-vertical-fix">
 /* 719: Garage MOT defects/advisories must stack vertically, one full-width item per row. */
